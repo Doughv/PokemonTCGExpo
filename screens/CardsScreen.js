@@ -88,6 +88,14 @@ const CardsScreen = ({ route, navigation }) => {
     loadCards();
   };
 
+  const showPriceDisclaimer = () => {
+    Alert.alert(
+      'Sobre os Preços',
+      'Os valores em Real são uma conversão direta do Dólar e podem não representar o valor praticado no mercado local brasileiro.',
+      [{ text: 'Entendi', style: 'default' }]
+    );
+  };
+
   const renderCardItem = ({ item }) => (
     <CardItem card={item} onPress={handleCardPress} />
   );
@@ -125,6 +133,12 @@ const CardsScreen = ({ route, navigation }) => {
         <Text style={styles.headerText}>
           {filteredCards.length} de {cards.length} cartas
         </Text>
+        <TouchableOpacity 
+          style={styles.helpButton}
+          onPress={() => showPriceDisclaimer()}
+        >
+          <Text style={styles.helpButtonText}>?</Text>
+        </TouchableOpacity>
       </View>
 
       <DownloadButton 
@@ -195,12 +209,28 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 8,
   },
   headerText: {
     fontSize: 14,
     color: '#666',
+  },
+  helpButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  helpButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   listContainer: {
     paddingHorizontal: 20,

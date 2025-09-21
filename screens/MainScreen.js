@@ -12,6 +12,10 @@ const MainScreen = ({ navigation }) => {
     navigation.navigate('Series');
   };
 
+  const handleSettingsPress = () => {
+    navigation.navigate('Settings');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -25,6 +29,16 @@ const MainScreen = ({ navigation }) => {
           <View style={styles.buttonContent}>
             <Text style={styles.buttonIcon}>📚</Text>
             <Text style={styles.buttonText}>COLEÇÕES</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.settingsButton}
+          onPress={handleSettingsPress}
+        >
+          <View style={styles.buttonContent}>
+            <Text style={styles.buttonIcon}>⚙️</Text>
+            <Text style={styles.buttonText}>CONFIGURAÇÕES</Text>
           </View>
         </TouchableOpacity>
         
@@ -62,6 +76,21 @@ const styles = StyleSheet.create({
   },
   collectionsButton: {
     backgroundColor: '#007AFF',
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  settingsButton: {
+    backgroundColor: '#6c757d',
     borderRadius: 20,
     paddingVertical: 20,
     paddingHorizontal: 40,

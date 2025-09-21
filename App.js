@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import TCGdexService from './services/TCGdexService';
 
 // Importar as telas
 import MainScreen from './screens/MainScreen';
@@ -9,10 +11,28 @@ import SeriesScreen from './screens/SeriesScreen';
 import SetsScreen from './screens/SetsScreen';
 import CardsScreen from './screens/CardsScreen';
 import CardDetailScreen from './screens/CardDetailScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
 const Stack = createStackNavigator();
 
 export default function App() {
+  useEffect(() => {
+    // Carregar idioma salvo na inicialização
+    const loadLanguage = async () => {
+      try {
+        const savedLanguage = await AsyncStorage.getItem('language');
+        if (savedLanguage) {
+          await TCGdexService.setLanguage(savedLanguage);
+          console.log('✅ Idioma carregado:', savedLanguage);
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar idioma:', error);
+      }
+    };
+
+    loadLanguage();
+  }, []);
+
   return (
     <NavigationContainer>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -55,6 +75,11 @@ export default function App() {
           name="CardDetail" 
           component={CardDetailScreen}
           options={{ title: 'Detalhes da Carta' }}
+        />
+        <Stack.Screen 
+          name="Settings" 
+          component={SettingsScreen}
+          options={{ title: 'Configurações' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

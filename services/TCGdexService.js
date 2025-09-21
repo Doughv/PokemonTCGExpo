@@ -1,6 +1,7 @@
 // Importar polyfills primeiro
 import '../polyfills';
 import TCGdex from '@tcgdex/sdk';
+import CacheService from './CacheService';
 
 // Polyfill robusto para APIs do navegador no React Native
 if (typeof global !== 'undefined') {
@@ -42,12 +43,25 @@ if (typeof global !== 'undefined') {
 class TCGdexService {
   constructor(language = 'pt') {
     this.language = language;
+    this.baseUrl = `https://api.tcgdex.net/v2/${language}`;
     try {
-      this.tcgdex = new tcgdex(language);
+      this.tcgdex = new TCGdex(language);
       console.log('✅ SDK TCGdex inicializado com sucesso');
     } catch (error) {
       console.error('❌ Erro ao inicializar SDK TCGdex:', error);
       this.tcgdex = null;
+    }
+  }
+
+  // Método para alterar idioma dinamicamente
+  async setLanguage(language) {
+    this.language = language;
+    this.baseUrl = `https://api.tcgdex.net/v2/${language}`;
+    try {
+      this.tcgdex = new TCGdex(language);
+      console.log(`✅ Idioma alterado para: ${language}`);
+    } catch (error) {
+      console.error('❌ Erro ao alterar idioma:', error);
     }
   }
 
@@ -84,7 +98,7 @@ class TCGdexService {
       // Fallback: construir URL manualmente
       const setId = card.set?.id || card.id?.split('-')[0] || 'sv01';
       const cardNumber = card.localId || card.number || '1';
-      const manualUrl = `https://assets.tcgdex.net/pt/sv/${setId}/${cardNumber}/${quality}.webp`;
+      const manualUrl = `https://assets.tcgdex.net/${this.language}/sv/${setId}/${cardNumber}/${quality}.webp`;
       console.log('🔧 URL manual:', manualUrl);
       return manualUrl;
     } catch (error) {
@@ -92,7 +106,7 @@ class TCGdexService {
       // Fallback para URL manual
       const setId = card.set?.id || card.id?.split('-')[0] || 'sv01';
       const cardNumber = card.localId || card.number || '1';
-      return `https://assets.tcgdex.net/pt/sv/${setId}/${cardNumber}/${quality}.webp`;
+      return `https://assets.tcgdex.net/${this.language}/sv/${setId}/${cardNumber}/${quality}.webp`;
     }
   }
 
@@ -127,15 +141,40 @@ class TCGdexService {
     }
   }
 
-  // Buscar todas as séries/coleções
+  // Buscar séries baseado nas configurações do usuário
   async getSeries() {
     try {
       console.log('🔍 Buscando séries...');
-      const response = await fetch('https://api.tcgdex.net/v2/pt/series');
-      const series = await response.json();
       
-      console.log('✅ Séries encontradas:', series.length);
-      return series;
+      // Tentar buscar do cache primeiro
+      let allSeries = await CacheService.getCachedSeries();
+      
+      if (!allSeries) {
+        console.log('📡 Buscando séries da API...');
+        const response = await fetch(`${this.baseUrl}/series`);
+        allSeries = await response.json();
+        
+        // Salvar no cache
+        await CacheService.setCachedSeries(allSeries);
+        console.log('💾 Séries salvas no cache');
+      } else {
+        console.log('⚡ Séries carregadas do cache');
+      }
+      
+      // Buscar configurações salvas
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const savedSettings = await AsyncStorage.getItem('selectedSeries');
+      
+      let selectedSeriesIds = ['sv']; // Padrão: apenas SV
+      if (savedSettings) {
+        selectedSeriesIds = JSON.parse(savedSettings);
+      }
+      
+      // Filtrar séries baseado nas configurações
+      const filteredSeries = allSeries.filter(series => selectedSeriesIds.includes(series.id));
+      
+      console.log('✅ Séries encontradas:', allSeries.length, '| Filtradas:', filteredSeries.length);
+      return filteredSeries;
     } catch (error) {
       console.error('❌ Erro ao buscar séries:', error);
       throw error;
@@ -146,8 +185,21 @@ class TCGdexService {
   async getSets() {
     try {
       console.log('🔍 Buscando expansões...');
-      const response = await fetch('https://api.tcgdex.net/v2/pt/sets');
-      const sets = await response.json();
+      
+      // Tentar buscar do cache primeiro
+      let sets = await CacheService.getCachedSets();
+      
+      if (!sets) {
+        console.log('📡 Buscando expansões da API...');
+        const response = await fetch(`${this.baseUrl}/sets`);
+        sets = await response.json();
+        
+        // Salvar no cache
+        await CacheService.setCachedSets(sets);
+        console.log('💾 Expansões salvas no cache');
+      } else {
+        console.log('⚡ Expansões carregadas do cache');
+      }
       
       // Filtrar apenas expansões com cartas em português
       const filteredSets = sets.filter(set => 
@@ -190,33 +242,46 @@ class TCGdexService {
     try {
       console.log('Buscando cartas da coleção:', setId);
       
-      // Buscar todas as cartas e filtrar por coleção
-      const response = await fetch('https://api.tcgdex.net/v2/pt/cards');
-      const allCards = await response.json();
+      // Tentar buscar do cache primeiro
+      let cardsWithDetails = await CacheService.getCachedCards(setId);
       
-      console.log('Total de cartas encontradas:', allCards.length);
-      
-      // Filtrar apenas cartas da coleção específica
-      const filteredCards = allCards.filter(card => {
-        const cardId = card.id || '';
-        return cardId.startsWith(setId + '-');
-      });
-      
-      console.log(`Cartas da coleção ${setId}:`, filteredCards.length);
-      
-      // Buscar dados completos de cada carta
-      const cardsWithDetails = await Promise.all(
-        filteredCards.slice(0, 50).map(async (card) => {
-          try {
-            const cardResponse = await fetch(`https://api.tcgdex.net/v2/pt/cards/${card.id}`);
-            const cardDetails = await cardResponse.json();
-            return cardDetails;
-          } catch (error) {
-            console.error(`Erro ao buscar detalhes da carta ${card.id}:`, error);
-            return card; // Retornar dados básicos se falhar
-          }
-        })
-      );
+      if (!cardsWithDetails) {
+        console.log('📡 Buscando cartas da API...');
+        
+        // Buscar todas as cartas e filtrar por coleção
+        const response = await fetch(`${this.baseUrl}/cards`);
+        const allCards = await response.json();
+        
+        console.log('Total de cartas encontradas:', allCards.length);
+        
+        // Filtrar apenas cartas da coleção específica
+        const filteredCards = allCards.filter(card => {
+          const cardId = card.id || '';
+          return cardId.startsWith(setId + '-');
+        });
+        
+        console.log(`Cartas da coleção ${setId}:`, filteredCards.length);
+        
+        // Buscar dados completos de cada carta
+        cardsWithDetails = await Promise.all(
+          filteredCards.slice(0, 50).map(async (card) => {
+            try {
+              const cardResponse = await fetch(`${this.baseUrl}/cards/${card.id}`);
+              const cardDetails = await cardResponse.json();
+              return cardDetails;
+            } catch (error) {
+              console.error(`Erro ao buscar detalhes da carta ${card.id}:`, error);
+              return card; // Retornar dados básicos se falhar
+            }
+          })
+        );
+        
+        // Salvar no cache
+        await CacheService.setCachedCards(setId, cardsWithDetails);
+        console.log('💾 Cartas salvas no cache');
+      } else {
+        console.log('⚡ Cartas carregadas do cache');
+      }
       
       console.log('Cartas com detalhes completos:', cardsWithDetails.length);
       return cardsWithDetails;
@@ -228,9 +293,9 @@ class TCGdexService {
     }
   }
 
-  // Obter URL da imagem da carta em português
+  // Obter URL da imagem da carta baseado no idioma atual
   getCardImageUrl(cardId, setId, imageType = 'high') {
-    return `https://assets.tcgdex.net/pt/${setId}/${cardId}/${imageType}.webp`;
+    return `https://assets.tcgdex.net/${this.language}/${setId}/${cardId}/${imageType}.webp`;
   }
 
   // Obter URL da imagem da carta em alta resolução

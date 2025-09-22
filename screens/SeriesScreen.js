@@ -9,8 +9,11 @@ import {
   RefreshControl,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from 'react-native';
 import TCGdexService from '../services/TCGdexService';
+
+const { width } = Dimensions.get('window');
 
 const SeriesScreen = ({ navigation }) => {
   const [series, setSeries] = useState([]);
@@ -24,10 +27,10 @@ const SeriesScreen = ({ navigation }) => {
   const loadSeries = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Carregando séries...');
+      console.log('Carregando séries...');
       const seriesData = await TCGdexService.getSeries();
       
-      console.log('📊 Dados recebidos:', seriesData.length, 'séries');
+      console.log('Dados recebidos:', seriesData.length, 'séries');
       
       // Ordenar por ordem cronológica (mais recentes primeiro)
       const sortedSeries = seriesData.sort((a, b) => {
@@ -45,12 +48,12 @@ const SeriesScreen = ({ navigation }) => {
       setSeries(sortedSeries);
       
       if (sortedSeries.length === 0) {
-        console.log('⚠️ Nenhuma série encontrada');
+        console.log('Nenhuma série encontrada');
       } else {
-        console.log('✅ Séries carregadas:', sortedSeries.map(s => s.name));
+        console.log('Séries carregadas:', sortedSeries.map(s => s.name));
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar séries:', error);
+      console.error('Erro ao carregar séries:', error);
       Alert.alert(
         'Erro',
         'Não foi possível carregar as séries. Verifique sua conexão com a internet.',
@@ -79,6 +82,26 @@ const SeriesScreen = ({ navigation }) => {
     return series.logo + '.webp';
   };
 
+  const getLocalLogo = (series) => {
+    // Mapeamento de IDs das séries para logos locais
+    // Só inclui os logos que realmente existem
+    const localLogos = {
+      // Adicione aqui os logos que você tiver
+      // 'xy': require('../assets/series/xy.png'),
+      // 'sm': require('../assets/series/sm.png'),
+      // 'swsh': require('../assets/series/swsh.png'),
+      // 'sv': require('../assets/series/sv.png'),
+      // 'bw': require('../assets/series/bw.png'),
+      // 'dp': require('../assets/series/dp.png'),
+      // 'ex': require('../assets/series/ex.png'),
+      // 'base': require('../assets/series/base.png'),
+      // 'col': require('../assets/series/col.png'),
+      // 'hgss': require('../assets/series/hgss.png'),
+    };
+    
+    return localLogos[series.id] || null;
+  };
+
   const handleSeriesPress = (series) => {
     navigation.navigate('Sets', { 
       seriesId: series.id, 
@@ -86,16 +109,32 @@ const SeriesScreen = ({ navigation }) => {
     });
   };
 
-  const renderSeriesItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.seriesItem} 
-      onPress={() => handleSeriesPress(item)}
-    >
-      <View style={styles.seriesContent}>
+  const renderSeriesItem = ({ item }) => {
+    const itemWidth = (width - 60) / 2;
+    
+    // Debug para verificar dados da série
+    console.log('Série:', item.name, 'Dados:', {
+      releaseDate: item.releaseDate,
+      release: item.release,
+      date: item.date,
+      launchDate: item.launchDate
+    });
+    
+    return (
+      <TouchableOpacity 
+        style={[styles.seriesItem, { width: itemWidth }]} 
+        onPress={() => handleSeriesPress(item)}
+      >
         <View style={styles.logoContainer}>
           {getLogoUrl(item) ? (
             <Image 
               source={{ uri: getLogoUrl(item) }} 
+              style={styles.seriesLogo}
+              resizeMode="contain"
+            />
+          ) : getLocalLogo(item) ? (
+            <Image 
+              source={getLocalLogo(item)} 
               style={styles.seriesLogo}
               resizeMode="contain"
             />
@@ -107,14 +146,15 @@ const SeriesScreen = ({ navigation }) => {
         </View>
         <View style={styles.seriesInfo}>
           <Text style={styles.seriesName}>{item.name}</Text>
-          <Text style={styles.seriesId}>ID: {item.id}</Text>
+          <Text style={styles.seriesDate}>
+            {item.releaseDate || item.release || item.date || item.launchDate 
+              ? new Date(item.releaseDate || item.release || item.date || item.launchDate).toLocaleDateString('pt-BR') 
+              : 'Data não disponível'}
+          </Text>
         </View>
-      </View>
-      <View style={styles.arrowContainer}>
-        <Text style={styles.arrow}>›</Text>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -131,6 +171,8 @@ const SeriesScreen = ({ navigation }) => {
         data={series}
         renderItem={renderSeriesItem}
         keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -158,14 +200,17 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   listContainer: {
-    padding: 16,
+    padding: 20,
+  },
+  row: {
+    justifyContent: 'center',
+    gap: 10,
   },
   seriesItem: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     marginBottom: 16,
-    flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -176,15 +221,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  seriesContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   logoContainer: {
-    width: 70,
-    height: 70,
-    marginRight: 20,
+    width: '100%',
+    height: 80,
+    marginBottom: 12,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
@@ -193,12 +233,12 @@ const styles = StyleSheet.create({
     borderColor: '#e9ecef',
   },
   seriesLogo: {
-    width: 60,
-    height: 60,
+    width: '100%',
+    height: '100%',
   },
   placeholderLogo: {
-    width: 60,
-    height: 60,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#e9ecef',
@@ -208,26 +248,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   seriesInfo: {
-    flex: 1,
+    alignItems: 'center',
   },
   seriesName: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 6,
+    textAlign: 'center',
   },
-  seriesId: {
-    fontSize: 16,
+  seriesDate: {
+    fontSize: 14,
     color: '#666',
     fontWeight: '500',
-  },
-  arrowContainer: {
-    marginLeft: 12,
-  },
-  arrow: {
-    fontSize: 24,
-    color: '#007AFF',
-    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

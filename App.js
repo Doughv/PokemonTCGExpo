@@ -12,6 +12,7 @@ import SetsScreen from './screens/SetsScreen';
 import CardsScreen from './screens/CardsScreen';
 import CardDetailScreen from './screens/CardDetailScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import DownloadsScreen from './screens/DownloadsScreen';
 
 const Stack = createStackNavigator();
 
@@ -80,6 +81,11 @@ export default function App() {
           name="Settings" 
           component={SettingsScreen}
           options={{ title: 'Configurações' }}
+        />
+        <Stack.Screen 
+          name="Downloads" 
+          component={DownloadsScreen}
+          options={{ title: 'Downloads' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -58,7 +58,7 @@ const DownloadStats = ({ onStatsUpdate }) => {
   if (stats.total === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>📱 Downloads</Text>
+        <Text style={styles.title}>Downloads</Text>
         <Text style={styles.emptyText}>
           Nenhuma imagem baixada ainda{'\n'}
           <Text style={styles.emptySubtext}>
@@ -72,9 +72,9 @@ const DownloadStats = ({ onStatsUpdate }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>📱 Downloads</Text>
+        <Text style={styles.title}>Downloads</Text>
         <TouchableOpacity onPress={handleClearDownloads} style={styles.clearButton}>
-          <Text style={styles.clearButtonText}>🗑️</Text>
+          <Text style={styles.clearButtonText}>🗑</Text>
         </TouchableOpacity>
       </View>
       

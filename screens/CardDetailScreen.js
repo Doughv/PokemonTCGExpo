@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ const CardDetailScreen = ({ route }) => {
   const [imageError, setImageError] = useState(false);
 
   const imageUrl = TCGdexService.getImageURL(card, 'high', 'png');
+
 
   const handleImageLoad = () => {
     setImageLoading(false);
@@ -75,7 +76,7 @@ const CardDetailScreen = ({ route }) => {
     
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚔️ Ataques</Text>
+        <Text style={styles.sectionTitle}>Ataques</Text>
         {card.attacks.map((attack, index) => (
           <View key={index} style={styles.attackContainer}>
             <View style={styles.attackHeader}>
@@ -117,7 +118,7 @@ const CardDetailScreen = ({ route }) => {
     
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>✨ Habilidades</Text>
+        <Text style={styles.sectionTitle}>Habilidades</Text>
         {card.abilities.map((ability, index) => (
           <View key={index} style={styles.abilityContainer}>
             <Text style={styles.abilityName}>{ability.name}</Text>
@@ -138,7 +139,7 @@ const CardDetailScreen = ({ route }) => {
     
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>💥 Fraquezas</Text>
+        <Text style={styles.sectionTitle}>Fraquezas</Text>
         <View style={styles.weaknessRow}>
           {card.weaknesses.map((weakness, index) => (
             <View key={index} style={styles.weaknessContainer}>
@@ -158,7 +159,7 @@ const CardDetailScreen = ({ route }) => {
     
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🛡️ Resistências</Text>
+        <Text style={styles.sectionTitle}>Resistências</Text>
         <View style={styles.resistanceRow}>
           {card.resistances.map((resistance, index) => (
             <View key={index} style={styles.resistanceContainer}>
@@ -178,7 +179,7 @@ const CardDetailScreen = ({ route }) => {
     
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🏃 Custo de Retirada</Text>
+        <Text style={styles.sectionTitle}>Custo de Retirada</Text>
         <View style={styles.retreatContainer}>
           <Text style={styles.retreatValue}>{card.retreat} Energia{card.retreat > 1 ? 's' : ''}</Text>
         </View>
@@ -199,7 +200,7 @@ const CardDetailScreen = ({ route }) => {
       
       {/* Informações Básicas do Pokemon */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>📊 Informações Básicas</Text>
+        <Text style={styles.sectionTitle}>Informações Básicas</Text>
         
         <View style={styles.statsRow}>
           {card.hp && (
@@ -240,7 +241,7 @@ const CardDetailScreen = ({ route }) => {
 
       {/* Informações da Carta */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🃏 Informações da Carta</Text>
+        <Text style={styles.sectionTitle}>Informações da Carta</Text>
         
         <View style={styles.infoGrid}>
           {card.category && (
@@ -283,43 +284,24 @@ const CardDetailScreen = ({ route }) => {
       {/* Variantes */}
       {card.variants && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>✨ Variantes Disponíveis</Text>
+          <Text style={styles.sectionTitle}>Variantes Disponíveis</Text>
           <View style={styles.variantsContainer}>
             {card.variants.normal && (
-              <Text style={styles.variantText}>📄 Normal</Text>
+              <Text style={styles.variantText}>Normal</Text>
             )}
             {card.variants.holo && (
-              <Text style={styles.variantText}>✨ Holo</Text>
+              <Text style={styles.variantText}>Holo</Text>
             )}
             {card.variants.reverse && (
-              <Text style={styles.variantText}>🔄 Reverse</Text>
+              <Text style={styles.variantText}>Reverse</Text>
             )}
             {card.variants.firstEdition && (
-              <Text style={styles.variantText}>1️⃣ Primeira Edição</Text>
+              <Text style={styles.variantText}>Primeira Edição</Text>
             )}
           </View>
         </View>
       )}
 
-      {/* Preços (se disponível) */}
-      {card.pricing && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💰 Preços de Mercado</Text>
-          {card.pricing.cardmarket && (
-            <View style={styles.pricingContainer}>
-              <Text style={styles.pricingTitle}>CardMarket (EUR)</Text>
-              <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Média:</Text>
-                <Text style={styles.pricingValue}>€{card.pricing.cardmarket.avg}</Text>
-              </View>
-              <View style={styles.pricingRow}>
-                <Text style={styles.pricingLabel}>Menor:</Text>
-                <Text style={styles.pricingValue}>€{card.pricing.cardmarket.low}</Text>
-              </View>
-            </View>
-          )}
-        </View>
-      )}
 
       {renderAbilities()}
       {renderAttacks()}
@@ -341,7 +323,7 @@ const CardDetailScreen = ({ route }) => {
         
         {imageError ? (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>🃏</Text>
+            <Text style={styles.errorText}>?</Text>
             <Text style={styles.errorSubtext}>Imagem não disponível</Text>
             <Text style={styles.errorSubtext}>
               A imagem desta carta não pôde ser carregada
@@ -565,6 +547,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#4CAF50',
+  },
+  conversionContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  conversionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
   },
   basicInfo: {
     marginBottom: 20,

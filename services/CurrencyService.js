@@ -15,46 +15,71 @@ class CurrencyService {
       if (cachedRate) {
         this.exchangeRate = cachedRate.rate;
         this.lastUpdate = cachedRate.timestamp;
-        console.log('⚡ Taxa de câmbio carregada do cache:', this.exchangeRate);
+        console.log('Taxa de câmbio carregada do cache:', this.exchangeRate);
         return this.exchangeRate;
       }
 
       // Verificar se temos uma taxa válida em memória
       if (this.exchangeRate && this.lastUpdate && 
           (Date.now() - this.lastUpdate) < this.cacheDuration) {
-        console.log('✅ Usando taxa de câmbio em memória:', this.exchangeRate);
+        console.log('Usando taxa de câmbio em memória:', this.exchangeRate);
         return this.exchangeRate;
       }
 
-      console.log('🔍 Buscando nova taxa de câmbio...');
+      console.log('Buscando nova taxa de câmbio...');
       
-      // Usar API gratuita para conversão USD -> BRL
-      const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-      const data = await response.json();
-      
-      if (data && data.rates && data.rates.BRL) {
-        this.exchangeRate = data.rates.BRL;
-        this.lastUpdate = Date.now();
+      try {
+        // Tentar API principal primeiro
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        const data = await response.json();
         
-        // Salvar no cache
-        await CacheService.setCachedExchangeRate({
-          rate: this.exchangeRate,
-          timestamp: this.lastUpdate
-        });
+        if (data && data.rates && data.rates.BRL) {
+          this.exchangeRate = data.rates.BRL;
+          this.lastUpdate = Date.now();
+          
+          // Salvar no cache
+          await CacheService.setCachedExchangeRate({
+            rate: this.exchangeRate,
+            timestamp: this.lastUpdate
+          });
+          
+          console.log('Taxa de câmbio atualizada:', this.exchangeRate);
+          return this.exchangeRate;
+        }
+      } catch (apiError) {
+        console.log('API principal falhou, tentando alternativa...');
         
-        console.log('✅ Taxa de câmbio atualizada:', this.exchangeRate);
-        return this.exchangeRate;
-      } else {
-        throw new Error('Resposta inválida da API de câmbio');
+        // Fallback para API alternativa
+        try {
+          const response2 = await fetch('https://api.fixer.io/latest?base=USD&symbols=BRL');
+          const data2 = await response2.json();
+          
+          if (data2 && data2.rates && data2.rates.BRL) {
+            this.exchangeRate = data2.rates.BRL;
+            this.lastUpdate = Date.now();
+            
+            await CacheService.setCachedExchangeRate({
+              rate: this.exchangeRate,
+              timestamp: this.lastUpdate
+            });
+            
+            console.log('Taxa de câmbio atualizada (API alternativa):', this.exchangeRate);
+            return this.exchangeRate;
+          }
+        } catch (apiError2) {
+          console.log('APIs de câmbio falharam, usando taxa fixa');
+        }
       }
+      
+      throw new Error('Não foi possível obter taxa de câmbio atual');
     } catch (error) {
-      console.error('❌ Erro ao buscar taxa de câmbio:', error);
+      console.error('Erro ao buscar taxa de câmbio:', error);
       
       // Fallback: usar taxa fixa como backup
       this.exchangeRate = 5.20; // Taxa aproximada como fallback
       this.lastUpdate = Date.now();
       
-      console.log('⚠️ Usando taxa de fallback:', this.exchangeRate);
+      console.log('Usando taxa de fallback:', this.exchangeRate);
       return this.exchangeRate;
     }
   }
@@ -75,7 +100,7 @@ class CurrencyService {
         }
       };
     } catch (error) {
-      console.error('❌ Erro na conversão:', error);
+      console.error('Erro na conversão:', error);
       
       // Fallback com taxa fixa
       const fallbackRate = 5.20;

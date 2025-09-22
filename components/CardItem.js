@@ -9,19 +9,16 @@ import {
 } from 'react-native';
 import ImageDownloadService from '../services/ImageDownloadService';
 import TCGdexService from '../services/TCGdexService';
-import CurrencyService from '../services/CurrencyService';
 
 const { width } = Dimensions.get('window');
-const cardWidth = (width - 60) / 2;
 
-const CardItem = ({ card, onPress }) => {
+const CardItem = ({ card, onPress, itemWidth }) => {
   const [imageError, setImageError] = useState(false);
   const [localImagePath, setLocalImagePath] = useState(null);
   const [imageLoading, setImageLoading] = useState(true);
-  const [priceInfo, setPriceInfo] = useState(null);
   
   // Debug: mostrar informações da carta
-  console.log('🔍 Carta recebida:', {
+  console.log('Carta recebida:', {
     name: card.name,
     rarity: card.rarity,
     category: card.category,
@@ -37,7 +34,6 @@ const CardItem = ({ card, onPress }) => {
 
   useEffect(() => {
     loadLocalImage();
-    loadPriceInfo();
   }, [card.id]);
 
   const loadLocalImage = async () => {
@@ -53,27 +49,6 @@ const CardItem = ({ card, onPress }) => {
     }
   };
 
-  const loadPriceInfo = async () => {
-    try {
-      // Verificar se a carta tem informações de preço da API
-      if (card.pricing && card.pricing.cardmarket && card.pricing.cardmarket.avg) {
-        // Converter EUR para USD (taxa aproximada 1 EUR = 1.1 USD)
-        const priceEUR = parseFloat(card.pricing.cardmarket.avg);
-        const priceUSD = priceEUR * 1.1; // Conversão EUR -> USD
-        
-        const priceData = await CurrencyService.formatPrice(priceUSD);
-        setPriceInfo(priceData);
-        console.log('💰 Preço real da API:', priceEUR, 'EUR →', priceUSD, 'USD');
-      } else {
-        // Se não tem preço na API, não mostrar preço
-        console.log('⚠️ Carta sem informações de preço na API:', card.name);
-        setPriceInfo(null);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar preço:', error);
-      setPriceInfo(null);
-    }
-  };
 
   const handleImageError = () => {
     setImageError(true);
@@ -82,6 +57,10 @@ const CardItem = ({ card, onPress }) => {
 
   const handleImageLoad = () => {
     setImageLoading(false);
+  };
+
+  const handleCardPress = () => {
+    onPress(card);
   };
 
   const getRarityColor = (rarity) => {
@@ -100,6 +79,71 @@ const CardItem = ({ card, onPress }) => {
         return '#E91E63'; // Rosa
       default:
         return '#90A4AE'; // Cinza
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'fire':
+      case 'fogo':
+        return '#FF5722'; // Vermelho
+      case 'grass':
+      case 'planta':
+        return '#4CAF50'; // Verde
+      case 'water':
+      case 'água':
+      case 'agua':
+        return '#2196F3'; // Azul
+      case 'electric':
+      case 'elétrico':
+      case 'eletrico':
+        return '#FFC107'; // Amarelo
+      case 'fighting':
+      case 'lutador':
+        return '#795548'; // Marrom
+      case 'psychic':
+      case 'psíquico':
+      case 'psiquico':
+        return '#9C27B0'; // Roxo
+      case 'dark':
+      case 'sombrio':
+        return '#424242'; // Cinza escuro
+      case 'metal':
+      case 'steel':
+        return '#607D8B'; // Azul acinzentado
+      case 'normal':
+      case 'incolor':
+        return '#E0E0E0'; // Cinza claro
+      case 'fairy':
+      case 'fada':
+        return '#E91E63'; // Rosa
+      case 'dragon':
+      case 'dragão':
+      case 'dragao':
+        return '#673AB7'; // Roxo escuro
+      case 'ground':
+      case 'terra':
+        return '#8D6E63'; // Marrom claro
+      case 'rock':
+      case 'pedra':
+        return '#795548'; // Marrom
+      case 'ice':
+      case 'gelo':
+        return '#B3E5FC'; // Azul claro
+      case 'flying':
+      case 'voador':
+        return '#81C784'; // Verde claro
+      case 'poison':
+      case 'veneno':
+        return '#7B1FA2'; // Roxo escuro
+      case 'bug':
+      case 'inseto':
+        return '#689F38'; // Verde escuro
+      case 'ghost':
+      case 'fantasma':
+        return '#512DA8'; // Roxo muito escuro
+      default:
+        return '#90A4AE'; // Cinza padrão
     }
   };
 
@@ -122,17 +166,17 @@ const CardItem = ({ card, onPress }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.container} onPress={() => onPress(card)}>
+    <TouchableOpacity style={[styles.container, { width: itemWidth }]} onPress={handleCardPress}>
       <View style={styles.imageContainer}>
         {imageLoading && (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>📱</Text>
+            <Text style={styles.loadingText}>...</Text>
           </View>
         )}
         
         {imageError ? (
           <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>🃏</Text>
+            <Text style={styles.placeholderText}>?</Text>
             <Text style={styles.placeholderSubtext}>
               {localImagePath ? 'Imagem local não encontrada' : 'Imagem não disponível'}
             </Text>
@@ -141,28 +185,23 @@ const CardItem = ({ card, onPress }) => {
           renderImage()
         )}
         
-        {localImagePath && (
-          <View style={styles.localBadge}>
-            <Text style={styles.localBadgeText}>📱</Text>
-          </View>
-        )}
       </View>
       
       <View style={styles.cardInfo}>
-        {/* Nome | Número */}
+        {/* Nome e ID */}
         <View style={styles.headerInfo}>
-          <Text style={styles.cardName} numberOfLines={1}>
+          <Text style={styles.cardName} numberOfLines={2}>
             {card.name}
           </Text>
-          <Text style={styles.cardNumber}>
-            {card.localId}/{card.set?.cardCount?.total || '?'}
+          <Text style={styles.cardId}>
+            {card.localId ? `${card.localId.padStart(3, '0')}/${card.set?.cardCount?.total || '???'}` : '???/???'}
           </Text>
         </View>
         
         {/* Raridade */}
         {card.rarity && (
-          <View style={styles.rarityContainer}>
-            <Text style={styles.rarityLabel}>Raridade:</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Raridade:</Text>
             <View style={[styles.rarityBadge, { backgroundColor: getRarityColor(card.rarity) }]}>
               <Text style={styles.rarityBadgeText}>{card.rarity}</Text>
             </View>
@@ -171,19 +210,24 @@ const CardItem = ({ card, onPress }) => {
         
         {/* Tipo */}
         {card.types && card.types.length > 0 && (
-          <Text style={styles.typeText}>
-            Tipo: {card.types.join(', ')}
-          </Text>
-        )}
-        
-        {/* Preço */}
-        {priceInfo && (
-          <View style={styles.priceContainer}>
-            <Text style={styles.priceText}>
-              Preço: {priceInfo.display}
-            </Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Tipo:</Text>
+            <View style={styles.typeContainer}>
+              {card.types.map((type, index) => (
+                <View 
+                  key={index} 
+                  style={[
+                    styles.typeBadge, 
+                    { backgroundColor: getTypeColor(type) }
+                  ]}
+                >
+                  <Text style={styles.typeBadgeText}>{type}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
+        
       </View>
     </TouchableOpacity>
   );
@@ -191,7 +235,6 @@ const CardItem = ({ card, onPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: cardWidth,
     backgroundColor: '#fff',
     borderRadius: 12,
     marginBottom: 16,
@@ -205,7 +248,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   imageContainer: {
-    height: cardWidth * 1.4,
+    height: 200,
     backgroundColor: '#f5f5f5',
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
@@ -239,87 +282,90 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-  localBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: '#4CAF50',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  localBadgeText: {
-    fontSize: 12,
-    color: '#fff',
-  },
   cardInfo: {
-    padding: 12,
+    padding: 10,
   },
   headerInfo: {
+    marginBottom: 6,
+  },
+  cardName: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  cardId: {
+    fontSize: 10,
+    color: '#666',
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+  },
+  infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  cardName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
-  },
-  cardNumber: {
-    fontSize: 12,
+  infoLabel: {
+    fontSize: 11,
     color: '#666',
     fontWeight: '600',
-    backgroundColor: '#f0f0f0',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    flex: 1,
   },
-  rarityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  rarityLabel: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: 'bold',
-    marginRight: 8,
+  infoValue: {
+    fontSize: 11,
+    color: '#333',
+    flex: 1,
+    textAlign: 'right',
   },
   rarityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   rarityBadgeText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#fff',
     fontWeight: 'bold',
     textTransform: 'uppercase',
   },
-  typeText: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 8,
+  typeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    flex: 1,
+    justifyContent: 'flex-end',
   },
-  priceContainer: {
-    marginTop: 4,
+  typeBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 4,
+    marginBottom: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
-  priceText: {
-    fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '600',
+  typeBadgeText: {
+    fontSize: 9,
+    color: '#fff',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
 });
 

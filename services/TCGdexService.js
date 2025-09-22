@@ -46,9 +46,9 @@ class TCGdexService {
     this.baseUrl = `https://api.tcgdex.net/v2/${language}`;
     try {
       this.tcgdex = new TCGdex(language);
-      console.log('✅ SDK TCGdex inicializado com sucesso');
+      console.log('SDK TCGdex inicializado com sucesso');
     } catch (error) {
-      console.error('❌ Erro ao inicializar SDK TCGdex:', error);
+      console.error('Erro ao inicializar SDK TCGdex:', error);
       this.tcgdex = null;
     }
   }
@@ -59,16 +59,16 @@ class TCGdexService {
     this.baseUrl = `https://api.tcgdex.net/v2/${language}`;
     try {
       this.tcgdex = new TCGdex(language);
-      console.log(`✅ Idioma alterado para: ${language}`);
+      console.log(`Idioma alterado para: ${language}`);
     } catch (error) {
-      console.error('❌ Erro ao alterar idioma:', error);
+      console.error('Erro ao alterar idioma:', error);
     }
   }
 
   // Usar a propriedade image da carta ou construir URL manualmente
   getImageURL(card, quality = 'high', extension = 'png') {
     try {
-      console.log('🔍 Debug getImageURL:', {
+      console.log('Debug getImageURL:', {
         cardName: card.name,
         cardId: card.id,
         hasImage: !!card.image,
@@ -84,14 +84,14 @@ class TCGdexService {
           imageUrl = imageUrl.endsWith('/') ? imageUrl : imageUrl + '/';
           imageUrl += `${quality}.webp`;
         }
-        console.log('✅ Usando image da carta:', imageUrl);
+        console.log('Usando image da carta:', imageUrl);
         return imageUrl;
       }
       
       // Se tem método getImageURL do SDK, usar ele
       if (card && typeof card.getImageURL === 'function') {
         const url = card.getImageURL(quality, extension);
-        console.log('✅ URL do SDK:', url);
+        console.log('URL do SDK:', url);
         return url;
       }
       
@@ -99,7 +99,7 @@ class TCGdexService {
       const setId = card.set?.id || card.id?.split('-')[0] || 'sv01';
       const cardNumber = card.localId || card.number || '1';
       const manualUrl = `https://assets.tcgdex.net/${this.language}/sv/${setId}/${cardNumber}/${quality}.webp`;
-      console.log('🔧 URL manual:', manualUrl);
+      console.log('URL manual:', manualUrl);
       return manualUrl;
     } catch (error) {
       console.error('Erro ao obter URL da imagem:', error);
@@ -144,21 +144,21 @@ class TCGdexService {
   // Buscar séries baseado nas configurações do usuário
   async getSeries() {
     try {
-      console.log('🔍 Buscando séries...');
+      console.log('Buscando séries...');
       
       // Tentar buscar do cache primeiro
       let allSeries = await CacheService.getCachedSeries();
       
       if (!allSeries) {
-        console.log('📡 Buscando séries da API...');
+        console.log('Buscando séries da API...');
         const response = await fetch(`${this.baseUrl}/series`);
         allSeries = await response.json();
         
         // Salvar no cache
         await CacheService.setCachedSeries(allSeries);
-        console.log('💾 Séries salvas no cache');
+        console.log('Séries salvas no cache');
       } else {
-        console.log('⚡ Séries carregadas do cache');
+        console.log('Séries carregadas do cache');
       }
       
       // Buscar configurações salvas
@@ -173,10 +173,10 @@ class TCGdexService {
       // Filtrar séries baseado nas configurações
       const filteredSeries = allSeries.filter(series => selectedSeriesIds.includes(series.id));
       
-      console.log('✅ Séries encontradas:', allSeries.length, '| Filtradas:', filteredSeries.length);
+      console.log('Séries encontradas:', allSeries.length, '| Filtradas:', filteredSeries.length);
       return filteredSeries;
     } catch (error) {
-      console.error('❌ Erro ao buscar séries:', error);
+      console.error('Erro ao buscar séries:', error);
       throw error;
     }
   }
@@ -184,21 +184,21 @@ class TCGdexService {
   // Buscar todas as expansões/sets
   async getSets() {
     try {
-      console.log('🔍 Buscando expansões...');
+      console.log('Buscando expansões...');
       
       // Tentar buscar do cache primeiro
       let sets = await CacheService.getCachedSets();
       
       if (!sets) {
-        console.log('📡 Buscando expansões da API...');
+        console.log('Buscando expansões da API...');
         const response = await fetch(`${this.baseUrl}/sets`);
         sets = await response.json();
         
         // Salvar no cache
         await CacheService.setCachedSets(sets);
-        console.log('💾 Expansões salvas no cache');
+        console.log('Expansões salvas no cache');
       } else {
-        console.log('⚡ Expansões carregadas do cache');
+        console.log('Expansões carregadas do cache');
       }
       
       // Filtrar apenas expansões com cartas em português
@@ -209,10 +209,10 @@ class TCGdexService {
       // Ordenar por data de lançamento (mais recentes primeiro)
       filteredSets.sort((a, b) => new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0));
       
-      console.log('✅ Expansões encontradas:', filteredSets.length);
+      console.log('Expansões encontradas:', filteredSets.length);
       return filteredSets;
     } catch (error) {
-      console.error('❌ Erro ao buscar expansões:', error);
+      console.error('Erro ao buscar expansões:', error);
       throw error;
     }
   }
@@ -220,7 +220,7 @@ class TCGdexService {
   // Buscar expansões de uma série específica
   async getSetsBySeries(seriesId) {
     try {
-      console.log('🔍 Buscando expansões da série:', seriesId);
+      console.log('Buscando expansões da série:', seriesId);
       const allSets = await this.getSets();
       
       // Filtrar expansões que pertencem à série
@@ -229,10 +229,10 @@ class TCGdexService {
         return set.id.startsWith(seriesId);
       });
       
-      console.log(`✅ Expansões da série ${seriesId}:`, seriesSets.length);
+      console.log(`Expansões da série ${seriesId}:`, seriesSets.length);
       return seriesSets;
     } catch (error) {
-      console.error('❌ Erro ao buscar expansões da série:', error);
+      console.error('Erro ao buscar expansões da série:', error);
       throw error;
     }
   }
@@ -246,7 +246,7 @@ class TCGdexService {
       let cardsWithDetails = await CacheService.getCachedCards(setId);
       
       if (!cardsWithDetails) {
-        console.log('📡 Buscando cartas da API...');
+        console.log('Buscando cartas da API...');
         
         // Buscar todas as cartas e filtrar por coleção
         const response = await fetch(`${this.baseUrl}/cards`);
@@ -264,7 +264,7 @@ class TCGdexService {
         
         // Buscar dados completos de cada carta
         cardsWithDetails = await Promise.all(
-          filteredCards.slice(0, 50).map(async (card) => {
+          filteredCards.map(async (card) => {
             try {
               const cardResponse = await fetch(`${this.baseUrl}/cards/${card.id}`);
               const cardDetails = await cardResponse.json();
@@ -278,9 +278,9 @@ class TCGdexService {
         
         // Salvar no cache
         await CacheService.setCachedCards(setId, cardsWithDetails);
-        console.log('💾 Cartas salvas no cache');
+        console.log('Cartas salvas no cache');
       } else {
-        console.log('⚡ Cartas carregadas do cache');
+        console.log('Cartas carregadas do cache');
       }
       
       console.log('Cartas com detalhes completos:', cardsWithDetails.length);

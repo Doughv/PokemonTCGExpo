@@ -7,10 +7,15 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Dimensions,
+  TouchableOpacity,
 } from 'react-native';
 import SetItem from '../components/SetItem';
-import DownloadStats from '../components/DownloadStats';
 import TCGdexService from '../services/TCGdexService';
+
+const { width } = Dimensions.get('window');
+const numColumns = 2;
+const itemWidth = (width - 40) / numColumns;
 
 const SetsScreen = ({ navigation, route }) => {
   const { seriesId, seriesName } = route.params;
@@ -30,7 +35,7 @@ const SetsScreen = ({ navigation, route }) => {
       
       const setsData = await TCGdexService.getSetsBySeries(seriesId);
       
-      console.log('📊 Dados recebidos:', setsData.length, 'expansões');
+      console.log('Dados recebidos:', setsData.length, 'expansões');
       
       setSets(setsData);
     } catch (error) {
@@ -57,7 +62,7 @@ const SetsScreen = ({ navigation, route }) => {
   };
 
   const renderSetItem = ({ item }) => (
-    <SetItem set={item} onPress={handleSetPress} />
+    <SetItem set={item} onPress={handleSetPress} itemWidth={itemWidth} />
   );
 
   if (loading) {
@@ -78,12 +83,21 @@ const SetsScreen = ({ navigation, route }) => {
         </Text>
       </View>
 
-      <DownloadStats />
+      <View style={styles.downloadsButtonContainer}>
+        <TouchableOpacity 
+          style={styles.downloadsButton}
+          onPress={() => navigation.navigate('Downloads')}
+        >
+          <Text style={styles.downloadsButtonText}>📥 Downloads</Text>
+        </TouchableOpacity>
+      </View>
       
       <FlatList
         data={sets}
         renderItem={renderSetItem}
         keyExtractor={(item) => item.id}
+        numColumns={numColumns}
+        columnWrapperStyle={styles.row}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -129,6 +143,34 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingTop: 16,
     paddingBottom: 20,
+  },
+  row: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+  },
+  downloadsButtonContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  downloadsButton: {
+    backgroundColor: '#6c757d',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  downloadsButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

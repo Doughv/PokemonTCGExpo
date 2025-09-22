@@ -9,10 +9,15 @@ import {
   RefreshControl,
   TextInput,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import CardItem from '../components/CardItem';
-import DownloadButton from '../components/DownloadButton';
 import TCGdexService from '../services/TCGdexService';
+import ImageDownloadService from '../services/ImageDownloadService';
+
+const { width } = Dimensions.get('window');
+const numColumns = 2;
+const itemWidth = (width - 60) / numColumns;
 
 const CardsScreen = ({ route, navigation }) => {
   const { setId, setName } = route.params;
@@ -21,6 +26,9 @@ const CardsScreen = ({ route, navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [filteredCards, setFilteredCards] = useState([]);
+  const [downloading, setDownloading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [currentCard, setCurrentCard] = useState('');
 
   useEffect(() => {
     navigation.setOptions({ title: setName });
@@ -45,11 +53,9 @@ const CardsScreen = ({ route, navigation }) => {
         return numA - numB;
       });
       
-      // Limitar a 50 cartas para melhor performance
-      const limitedCards = sortedCards.slice(0, 50);
-      console.log(`Exibindo ${limitedCards.length} de ${sortedCards.length} cartas`);
+      console.log(`Exibindo ${sortedCards.length} cartas`);
       
-      setCards(limitedCards);
+      setCards(sortedCards);
     } catch (error) {
       console.error('Erro ao carregar cartas:', error);
       Alert.alert(
@@ -88,16 +94,67 @@ const CardsScreen = ({ route, navigation }) => {
     loadCards();
   };
 
-  const showPriceDisclaimer = () => {
+  const showDownloadInfo = () => {
     Alert.alert(
-      'Sobre os Preços',
-      'Os valores em Real são uma conversão direta do Dólar e podem não representar o valor praticado no mercado local brasileiro.',
+      'Sobre o Download',
+      `Esta coleção possui ${cards.length} cartas.\n\nO download salvará todas as imagens no seu dispositivo para visualização offline. Cada imagem ocupa aproximadamente 500KB de espaço.`,
       [{ text: 'Entendi', style: 'default' }]
     );
   };
 
+  const handleDownload = async () => {
+    try {
+      setDownloading(true);
+      setProgress(0);
+      setCurrentCard('');
+
+      // Verificar espaço disponível
+      const availableSpace = await ImageDownloadService.getAvailableSpace();
+      const estimatedSize = cards.length * 0.5; // ~500KB por imagem
+      
+      if (availableSpace < estimatedSize * 1024 * 1024) {
+        Alert.alert(
+          'Espaço Insuficiente',
+          'Não há espaço suficiente no dispositivo para baixar esta coleção.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Iniciar download
+      const result = await ImageDownloadService.downloadSetImages(
+        setId,
+        cards,
+        (progressData) => {
+          setProgress(progressData.progress);
+          setCurrentCard(progressData.currentCard);
+        }
+      );
+
+      Alert.alert(
+        'Download Concluído!',
+        `Coleção ${setName} baixada com sucesso!\n${result.downloaded}/${result.total} imagens.`,
+        [{ text: 'OK' }]
+      );
+
+      // Recarregar as cartas para mostrar as imagens baixadas
+      loadCards();
+    } catch (error) {
+      console.error('Erro no download:', error);
+      Alert.alert(
+        'Erro no Download',
+        'Ocorreu um erro ao baixar as imagens. Verifique sua conexão com a internet.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setDownloading(false);
+      setProgress(0);
+      setCurrentCard('');
+    }
+  };
+
   const renderCardItem = ({ item }) => (
-    <CardItem card={item} onPress={handleCardPress} />
+    <CardItem card={item} onPress={handleCardPress} itemWidth={itemWidth} />
   );
 
   if (loading) {
@@ -133,19 +190,42 @@ const CardsScreen = ({ route, navigation }) => {
         <Text style={styles.headerText}>
           {filteredCards.length} de {cards.length} cartas
         </Text>
-        <TouchableOpacity 
-          style={styles.helpButton}
-          onPress={() => showPriceDisclaimer()}
-        >
-          <Text style={styles.helpButtonText}>?</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={[styles.downloadButton, downloading && styles.downloadButtonActive]}
+            onPress={handleDownload}
+            disabled={downloading}
+          >
+            <Text style={styles.downloadButtonText}>
+              {downloading ? `Baixando... ${Math.round(progress)}%` : 'Baixar'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.helpButton}
+            onPress={() => showDownloadInfo()}
+          >
+            <Text style={styles.helpButtonText}>?</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <DownloadButton 
-        set={{ id: setId, name: setName }}
-        cards={cards}
-        onDownloadComplete={handleDownloadComplete}
-      />
+      {downloading && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${progress}%` }
+              ]} 
+            />
+          </View>
+          {currentCard && (
+            <Text style={styles.currentCardText}>
+              Baixando: {currentCard}
+            </Text>
+          )}
+        </View>
+      )}
 
       <FlatList
         data={filteredCards}
@@ -232,12 +312,63 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  downloadButton: {
+    backgroundColor: '#6c757d',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginRight: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  downloadButtonActive: {
+    backgroundColor: '#FFA726',
+  },
+  downloadButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  progressContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#4CAF50',
+    borderRadius: 2,
+  },
+  currentCardText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 4,
+  },
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 8,
+    gap: 10,
   },
 });
 

@@ -29,15 +29,15 @@ const SettingsScreen = ({ navigation }) => {
   const loadSeries = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Carregando todas as séries...');
+      console.log('Carregando todas as séries...');
       
       const response = await fetch('https://api.tcgdex.net/v2/pt/series');
       const series = await response.json();
       
-      console.log('✅ Séries encontradas:', series.length);
+      console.log('Séries encontradas:', series.length);
       setAllSeries(series);
     } catch (error) {
-      console.error('❌ Erro ao carregar séries:', error);
+      console.error('Erro ao carregar séries:', error);
       Alert.alert(
         'Erro',
         'Não foi possível carregar as séries. Verifique sua conexão.',
@@ -58,7 +58,7 @@ const SettingsScreen = ({ navigation }) => {
         setSelectedSeries(['sv']);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar séries selecionadas:', error);
+      console.error('Erro ao carregar séries selecionadas:', error);
       setSelectedSeries(['sv']);
     }
   };
@@ -70,7 +70,7 @@ const SettingsScreen = ({ navigation }) => {
         setLanguage(saved);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar idioma:', error);
+      console.error('Erro ao carregar idioma:', error);
     }
   };
 
@@ -79,7 +79,7 @@ const SettingsScreen = ({ navigation }) => {
       const info = await CacheService.getCacheInfo();
       setCacheInfo(info);
     } catch (error) {
-      console.error('❌ Erro ao carregar informações do cache:', error);
+      console.error('Erro ao carregar informações do cache:', error);
     }
   };
 
@@ -103,7 +103,7 @@ const SettingsScreen = ({ navigation }) => {
         ]
       );
     } catch (error) {
-      console.error('❌ Erro ao atualizar cache:', error);
+      console.error('Erro ao atualizar cache:', error);
       Alert.alert('Erro', 'Não foi possível atualizar o cache.');
     }
   };
@@ -127,7 +127,7 @@ const SettingsScreen = ({ navigation }) => {
         ]
       );
     } catch (error) {
-      console.error('❌ Erro ao limpar cache:', error);
+      console.error('Erro ao limpar cache:', error);
       Alert.alert('Erro', 'Não foi possível limpar o cache.');
     }
   };
@@ -159,7 +159,7 @@ const SettingsScreen = ({ navigation }) => {
         ]
       );
     } catch (error) {
-      console.error('❌ Erro ao salvar configurações:', error);
+      console.error('Erro ao salvar configurações:', error);
       Alert.alert('Erro', 'Não foi possível salvar as configurações.');
     }
   };
@@ -224,7 +224,7 @@ const SettingsScreen = ({ navigation }) => {
               onPress={() => setLanguage('pt')}
             >
               <Text style={[styles.languageText, language === 'pt' && styles.selectedLanguageText]}>
-                🇧🇷 Português
+Português
               </Text>
             </TouchableOpacity>
             
@@ -233,7 +233,7 @@ const SettingsScreen = ({ navigation }) => {
               onPress={() => setLanguage('en')}
             >
               <Text style={[styles.languageText, language === 'en' && styles.selectedLanguageText]}>
-                🇺🇸 English
+English
               </Text>
             </TouchableOpacity>
           </View>
@@ -259,11 +259,11 @@ const SettingsScreen = ({ navigation }) => {
           
           <View style={styles.cacheButtons}>
             <TouchableOpacity style={styles.cacheButton} onPress={refreshCache}>
-              <Text style={styles.cacheButtonText}>🔄 Atualizar Cache</Text>
+              <Text style={styles.cacheButtonText}>Atualizar Cache</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={[styles.cacheButton, styles.clearButton]} onPress={clearCache}>
-              <Text style={styles.cacheButtonText}>🗑️ Limpar Cache</Text>
+              <Text style={styles.cacheButtonText}>Limpar Cache</Text>
             </TouchableOpacity>
           </View>
         </View>

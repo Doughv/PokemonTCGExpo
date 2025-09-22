@@ -70,7 +70,7 @@ const DownloadButton = ({ set, cards, onDownloadComplete }) => {
     if (downloading) {
       return `Baixando... ${Math.round(progress)}%`;
     }
-    return `Baixar Coleção (${cards.length} imagens)`;
+    return '⬇️';
   };
 
   const getButtonColor = () => {
@@ -121,12 +121,14 @@ const DownloadButton = ({ set, cards, onDownloadComplete }) => {
 const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
+    alignItems: 'center',
   },
   button: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -142,9 +144,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 8,
   },
   progressContainer: {
     marginTop: 12,

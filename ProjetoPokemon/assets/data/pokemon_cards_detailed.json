@@ -1,0 +1,176 @@
+[
+  {
+    "category": "Pokemon",
+    "id": "sv01-225",
+    "illustrator": "5ban Graphics",
+    "image": "https://assets.tcgdex.net/pt/sv/sv01/225",
+    "localId": "225",
+    "name": "Gyarados ex",
+    "rarity": "Ultra Rara",
+    "set": {
+      "cardCount": {
+        "official": 198,
+        "total": 258
+      },
+      "id": "sv01",
+      "logo": "https://assets.tcgdex.net/pt/sv/sv01/logo",
+      "name": "Escarlate e Violeta",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+    },
+    "variants": {
+      "firstEdition": false,
+      "holo": true,
+      "normal": false,
+      "reverse": false,
+      "wPromo": false
+    },
+    "variants_detailed": [
+      {
+        "type": "holo",
+        "size": "standard"
+      }
+    ],
+    "dexId": [
+      130
+    ],
+    "hp": 300,
+    "types": [
+      "Água"
+    ],
+    "stage": "Estágio 1",
+    "attacks": [
+      {
+        "cost": [
+          "Água",
+          "Água",
+          "Água"
+        ],
+        "name": "Cachoeira",
+        "damage": 100
+      },
+      {
+        "cost": [
+          "Água",
+          "Água",
+          "Água",
+          "Incolor",
+          "Incolor"
+        ],
+        "name": "Cauda Tirânica",
+        "effect": "Se o Pokémon Ativo do seu oponente já tiver algum contador de dano nele, este ataque causará 180 pontos de dano a mais.",
+        "damage": "180+"
+      }
+    ],
+    "retreat": 4,
+    "regulationMark": "G",
+    "legal": {
+      "standard": true,
+      "expanded": true
+    },
+    "updated": "2025-08-16T20:39:55Z",
+    "pricing": {
+      "cardmarket": {
+        "updated": "2025-09-21T00:47:14.000Z",
+        "unit": "EUR",
+        "avg": 1.42,
+        "low": 0.25,
+        "trend": 1.3,
+        "avg1": 1.6,
+        "avg7": 1.28,
+        "avg30": 1.42,
+        "avg-holo": null,
+        "low-holo": null,
+        "trend-holo": 0,
+        "avg1-holo": null,
+        "avg7-holo": null,
+        "avg30-holo": null
+      },
+      "tcgplayer": null
+    }
+  },
+  {
+    "category": "Pokemon",
+    "id": "sv01-226",
+    "illustrator": "PLANETA Tsuji",
+    "image": "https://assets.tcgdex.net/pt/sv/sv01/226",
+    "localId": "226",
+    "name": "Magnezone ex",
+    "rarity": "Ultra Rara",
+    "set": {
+      "cardCount": {
+        "official": 198,
+        "total": 258
+      },
+      "id": "sv01",
+      "logo": "https://assets.tcgdex.net/pt/sv/sv01/logo",
+      "name": "Escarlate e Violeta",
+      "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+    },
+    "variants": {
+      "firstEdition": false,
+      "holo": true,
+      "normal": false,
+      "reverse": false,
+      "wPromo": false
+    },
+    "variants_detailed": [
+      {
+        "type": "holo",
+        "size": "standard"
+      }
+    ],
+    "dexId": [
+      462
+    ],
+    "hp": 330,
+    "types": [
+      "Elétrico"
+    ],
+    "stage": "Estágio 2",
+    "attacks": [
+      {
+        "cost": [
+          "Elétrico"
+        ],
+        "name": "Esmagamento de Energia",
+        "effect": "Este ataque causa 50 pontos de dano para cada Energia ligada a todos os Pokémon do seu oponente.",
+        "damage": "50×"
+      },
+      {
+        "cost": [
+          "Elétrico",
+          "Elétrico"
+        ],
+        "name": "Lançador de Pulsos",
+        "effect": "Este Pokémon também causa 30 pontos de dano a si mesmo.",
+        "damage": 220
+      }
+    ],
+    "retreat": 3,
+    "regulationMark": "G",
+    "legal": {
+      "standard": true,
+      "expanded": true
+    },
+    "updated": "2025-08-16T20:39:55Z",
+    "pricing": {
+      "cardmarket": {
+        "updated": "2025-09-19T00:44:33.000Z",
+        "unit": "EUR",
+        "avg": 0.64,
+        "low": 0.09,
+        "trend": 0.59,
+        "avg1": 0.51,
+        "avg7": 0.67,
+        "avg30": 0.64,
+        "avg-holo": null,
+        "low-holo": null,
+        "trend-holo": 0,
+        "avg1-holo": null,
+        "avg7-holo": null,
+        "avg30-holo": null
+      },
+      "tcgplayer": null
+    }
+  }
+]

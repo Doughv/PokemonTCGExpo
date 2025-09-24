@@ -20,7 +20,7 @@ const numColumns = 2;
 const itemWidth = (width - 60) / numColumns;
 
 const CardsScreen = ({ route, navigation }) => {
-  const { setId, setName } = route.params;
+  const { setId, setName, setCardCount } = route.params;
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -86,7 +86,10 @@ const CardsScreen = ({ route, navigation }) => {
   };
 
   const handleCardPress = (card) => {
-    navigation.navigate('CardDetail', { card });
+    navigation.navigate('CardDetail', { 
+      card,
+      setCardCount: setCardCount
+    });
   };
 
   const handleDownloadComplete = (downloadedSetId) => {
@@ -154,7 +157,12 @@ const CardsScreen = ({ route, navigation }) => {
   };
 
   const renderCardItem = ({ item }) => (
-    <CardItem card={item} onPress={handleCardPress} itemWidth={itemWidth} />
+    <CardItem 
+      card={item} 
+      onPress={handleCardPress} 
+      itemWidth={itemWidth}
+      setCardCount={setCardCount}
+    />
   );
 
   if (loading) {

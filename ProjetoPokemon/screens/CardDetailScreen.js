@@ -14,29 +14,15 @@ import TCGdexService from '../services/TCGdexService';
 const { width, height } = Dimensions.get('window');
 
 const CardDetailScreen = ({ route }) => {
-  const { card } = route.params;
+  const { card, setCardCount } = route.params;
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const [setInfo, setSetInfo] = useState(null);
 
   const imageUrl = TCGdexService.getImageURL(card, 'high', 'png');
 
-  // Buscar informações completas do set se não estiverem disponíveis
-  useEffect(() => {
-    const fetchSetInfo = async () => {
-      if (card.set?.id) {
-        try {
-          console.log('Buscando informações do set:', card.set.id);
-          const set = await TCGdexService.getSet(card.set.id);
-          setSetInfo(set);
-        } catch (error) {
-          console.error('Erro ao buscar informações do set:', error);
-        }
-      }
-    };
-
-    fetchSetInfo();
-  }, [card.set]);
+  // Removido: não precisamos mais buscar informações do set
+  // pois já recebemos setCardCount via props
 
 
   const handleImageLoad = () => {
@@ -214,7 +200,7 @@ const CardDetailScreen = ({ route }) => {
           {card.suffix && <Text style={styles.suffix}> {card.suffix}</Text>}
         </Text>
         <Text style={styles.cardNumber}>
-          {card.localId || card.number || 'N/A'}/{setInfo?.cardCount?.total || card.set?.cardCount?.total || 'N/A'}
+          {card.localId || card.number || 'N/A'}/{setCardCount || setInfo?.cardCount?.total || card.set?.cardCount?.total || 'N/A'}
         </Text>
       </View>
       

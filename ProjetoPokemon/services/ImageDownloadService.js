@@ -35,7 +35,7 @@ class ImageDownloadService {
       const downloadedImages = await this.getDownloadedImages();
       downloadedImages[cardId] = {
         cardId,
-        setId: card.set.id,
+        setId: card.setId || card.set?.id,
         localPath,
         downloadedAt: new Date().toISOString(),
         cardName: card.name
@@ -47,7 +47,7 @@ class ImageDownloadService {
   }
 
   // Baixar uma imagem específica
-  async downloadCardImage(card, onProgress) {
+  async downloadCardImage(card, setId = null, onProgress) {
     try {
       console.log(`Baixando imagem para: ${card.name}`);
       
@@ -58,8 +58,14 @@ class ImageDownloadService {
         return existing.localPath;
       }
 
+      // Usar setId fornecido ou tentar usar card.set.id
+      const targetSetId = setId || card.set?.id;
+      if (!targetSetId) {
+        throw new Error(`Carta ${card.name} não possui informações do set`);
+      }
+
       // Criar diretório da coleção
-      const collectionDir = `${FileSystem.documentDirectory}imagens_pokemon/${card.set.id}`;
+      const collectionDir = `${FileSystem.documentDirectory}imagens_pokemon/${targetSetId}`;
       await FileSystem.makeDirectoryAsync(collectionDir, { intermediates: true });
 
       // URL da imagem usando o método do SDK
@@ -70,8 +76,9 @@ class ImageDownloadService {
       const downloadResult = await FileSystem.downloadAsync(imageUrl, localPath);
       
       if (downloadResult.status === 200) {
-        // Salvar informação
-        await this.saveDownloadedImage(card.id, card, localPath);
+        // Salvar informação com setId correto
+        const cardWithSetId = { ...card, setId: targetSetId };
+        await this.saveDownloadedImage(card.id, cardWithSetId, localPath);
 
         console.log(`Imagem baixada com sucesso: ${card.name}`);
         return localPath;
@@ -94,7 +101,7 @@ class ImageDownloadService {
 
       for (const card of cards) {
         try {
-          await this.downloadCardImage(card);
+          await this.downloadCardImage(card, setId);
           downloaded++;
           
           if (onProgress) {

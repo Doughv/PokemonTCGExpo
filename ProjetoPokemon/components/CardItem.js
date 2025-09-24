@@ -12,7 +12,7 @@ import TCGdexService from '../services/TCGdexService';
 
 const { width } = Dimensions.get('window');
 
-const CardItem = ({ card, onPress, itemWidth }) => {
+const CardItem = ({ card, onPress, itemWidth, setCardCount }) => {
   const [imageError, setImageError] = useState(false);
   const [localImagePath, setLocalImagePath] = useState(null);
   const [imageLoading, setImageLoading] = useState(true);
@@ -196,7 +196,7 @@ const CardItem = ({ card, onPress, itemWidth }) => {
             {card.name}
           </Text>
           <Text style={styles.cardId}>
-            {card.localId ? `${card.localId.padStart(3, '0')}/${card.set?.cardCount?.total || '???'}` : '???/???'}
+            {card.localId ? `${card.localId.padStart(3, '0')}/${setCardCount || card.set?.cardCount?.total || '???'}` : '???/???'}
           </Text>
         </View>
         

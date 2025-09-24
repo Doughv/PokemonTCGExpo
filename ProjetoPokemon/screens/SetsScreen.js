@@ -58,7 +58,11 @@ const SetsScreen = ({ navigation, route }) => {
 
   const handleSetPress = (set) => {
     console.log('Navegando para coleção:', set.name);
-    navigation.navigate('Cards', { setId: set.id, setName: set.name });
+    navigation.navigate('Cards', { 
+      setId: set.id, 
+      setName: set.name,
+      setCardCount: set.cardCount?.total || 0
+    });
   };
 
   const renderSetItem = ({ item }) => (

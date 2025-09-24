@@ -1,0 +1,116 @@
+{
+  "category": "Pokemon",
+  "id": "bw1-1",
+  "illustrator": "Kagemaru Himeno",
+  "image": "https://assets.tcgdex.net/pt/bw/bw1/1",
+  "localId": "1",
+  "name": "Snivy",
+  "rarity": "Comum",
+  "set": {
+    "cardCount": {
+      "official": 114,
+      "total": 115
+    },
+    "id": "bw1",
+    "name": "Black & White",
+    "symbol": "https://assets.tcgdex.net/univ/bw/bw1/symbol"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": true,
+    "reverse": true,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard"
+    },
+    {
+      "type": "reverse",
+      "size": "standard"
+    },
+    {
+      "type": "holo",
+      "size": "standard"
+    }
+  ],
+  "dexId": [
+    495
+  ],
+  "hp": 60,
+  "types": [
+    "Planta"
+  ],
+  "stage": "Básico",
+  "attacks": [
+    {
+      "cost": [
+        "Planta"
+      ],
+      "damage": 10
+    },
+    {
+      "cost": [
+        "Planta",
+        "Incolor"
+      ],
+      "damage": 20
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fogo",
+      "value": "×2"
+    }
+  ],
+  "resistances": [
+    {
+      "type": "Água",
+      "value": "-20"
+    }
+  ],
+  "retreat": 1,
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2025-08-16T20:39:55Z",
+  "pricing": {
+    "cardmarket": {
+      "updated": "2025-09-19T00:44:33.000Z",
+      "unit": "EUR",
+      "avg": 0.15,
+      "low": 0.02,
+      "trend": 0.16,
+      "avg1": 0.02,
+      "avg7": 0.14,
+      "avg30": 0.14,
+      "avg-holo": 0.55,
+      "low-holo": 0.07,
+      "trend-holo": 0.98,
+      "avg1-holo": 5,
+      "avg7-holo": 1.5,
+      "avg30-holo": 1.35
+    },
+    "tcgplayer": {
+      "updated": "2025-09-18T20:06:45.000Z",
+      "unit": "USD",
+      "normal": {
+        "lowPrice": 0.09,
+        "midPrice": 0.33,
+        "highPrice": 3.21,
+        "marketPrice": 0.38,
+        "directLowPrice": 0.1
+      },
+      "reverse-holofoil": {
+        "lowPrice": 0.5,
+        "midPrice": 2.1,
+        "highPrice": 3.49,
+        "marketPrice": 2.19,
+        "directLowPrice": null
+      }
+    }
+  }
+}

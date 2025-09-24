@@ -33,11 +33,38 @@ class CacheService {
     }
   }
 
+  // Limpar referências circulares dos objetos
+  cleanCircularReferences(obj, seen = new WeakSet()) {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    
+    if (seen.has(obj)) {
+      return '[Circular Reference]';
+    }
+    
+    seen.add(obj);
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.cleanCircularReferences(item, seen));
+    }
+    
+    const cleaned = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        cleaned[key] = this.cleanCircularReferences(obj[key], seen);
+      }
+    }
+    
+    return cleaned;
+  }
+
   // Salvar dados no cache
   async setCache(key, data) {
     try {
       const timestamp = Date.now().toString();
-      await AsyncStorage.setItem(key, JSON.stringify(data));
+      const cleanedData = this.cleanCircularReferences(data);
+      await AsyncStorage.setItem(key, JSON.stringify(cleanedData));
       await AsyncStorage.setItem(`${key}_timestamp`, timestamp);
       console.log(`✅ Cache salvo: ${key}`);
     } catch (error) {

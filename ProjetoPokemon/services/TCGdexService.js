@@ -141,7 +141,7 @@ class TCGdexService {
     }
   }
 
-  // Buscar séries baseado nas configurações do usuário
+  // Buscar séries baseado nas configurações do usuário usando SDK
   async getSeries() {
     try {
       console.log('Buscando séries...');
@@ -150,9 +150,24 @@ class TCGdexService {
       let allSeries = await CacheService.getCachedSeries();
       
       if (!allSeries) {
-        console.log('Buscando séries da API...');
-        const response = await fetch(`${this.baseUrl}/series`);
-        allSeries = await response.json();
+        console.log('Buscando séries via SDK...');
+        
+        if (this.tcgdex) {
+          try {
+            // Usar SDK para buscar séries
+            allSeries = await this.tcgdex.series.list();
+            console.log('Séries encontradas via SDK:', allSeries.length);
+          } catch (sdkError) {
+            console.log('SDK falhou, usando HTTP direto...');
+            // Fallback para HTTP direto
+            const response = await fetch(`${this.baseUrl}/series`);
+            allSeries = await response.json();
+          }
+        } else {
+          // Fallback para HTTP direto
+          const response = await fetch(`${this.baseUrl}/series`);
+          allSeries = await response.json();
+        }
         
         // Salvar no cache
         await CacheService.setCachedSeries(allSeries);
@@ -181,7 +196,7 @@ class TCGdexService {
     }
   }
 
-  // Buscar todas as expansões/sets
+  // Buscar todas as expansões/sets usando SDK
   async getSets() {
     try {
       console.log('Buscando expansões...');
@@ -190,9 +205,24 @@ class TCGdexService {
       let sets = await CacheService.getCachedSets();
       
       if (!sets) {
-        console.log('Buscando expansões da API...');
-        const response = await fetch(`${this.baseUrl}/sets`);
-        sets = await response.json();
+        console.log('Buscando expansões via SDK...');
+        
+        if (this.tcgdex) {
+          try {
+            // Usar SDK para buscar sets
+            sets = await this.tcgdex.set.list();
+            console.log('Sets encontrados via SDK:', sets.length);
+          } catch (sdkError) {
+            console.log('SDK falhou, usando HTTP direto...');
+            // Fallback para HTTP direto
+            const response = await fetch(`${this.baseUrl}/sets`);
+            sets = await response.json();
+          }
+        } else {
+          // Fallback para HTTP direto
+          const response = await fetch(`${this.baseUrl}/sets`);
+          sets = await response.json();
+        }
         
         // Salvar no cache
         await CacheService.setCachedSets(sets);
@@ -237,7 +267,7 @@ class TCGdexService {
     }
   }
 
-  // Buscar cartas de uma coleção específica usando a API correta
+  // Buscar cartas de uma coleção específica usando SDK otimizado
   async getCardsBySet(setId) {
     try {
       console.log('Buscando cartas da coleção:', setId);
@@ -246,35 +276,73 @@ class TCGdexService {
       let cardsWithDetails = await CacheService.getCachedCards(setId);
       
       if (!cardsWithDetails) {
-        console.log('Buscando cartas da API...');
+        console.log('Buscando cartas via SDK...');
         
-        // Buscar todas as cartas e filtrar por coleção
-        const response = await fetch(`${this.baseUrl}/cards`);
-        const allCards = await response.json();
+        if (!this.tcgdex) {
+          throw new Error('SDK tcgdex não inicializado');
+        }
         
-        console.log('Total de cartas encontradas:', allCards.length);
-        
-        // Filtrar apenas cartas da coleção específica
-        const filteredCards = allCards.filter(card => {
-          const cardId = card.id || '';
-          return cardId.startsWith(setId + '-');
-        });
-        
-        console.log(`Cartas da coleção ${setId}:`, filteredCards.length);
-        
-        // Buscar dados completos de cada carta
-        cardsWithDetails = await Promise.all(
-          filteredCards.map(async (card) => {
-            try {
-              const cardResponse = await fetch(`${this.baseUrl}/cards/${card.id}`);
-              const cardDetails = await cardResponse.json();
-              return cardDetails;
-            } catch (error) {
-              console.error(`Erro ao buscar detalhes da carta ${card.id}:`, error);
-              return card; // Retornar dados básicos se falhar
-            }
-          })
-        );
+        try {
+          // Método 1: Tentar buscar diretamente pelo SDK do set
+          const set = await this.tcgdex.set.get(setId);
+          console.log('Set encontrado via SDK:', set.name);
+          
+          // Se o set tem cards, usar eles
+          if (set.cards && Array.isArray(set.cards)) {
+            cardsWithDetails = set.cards;
+            console.log(`Cartas encontradas via SDK: ${cardsWithDetails.length}`);
+          } else {
+            // Método 2: Fallback - buscar todas as cartas e filtrar
+            console.log('Set não tem cards diretos, buscando via fallback...');
+            const allCards = await this.tcgdex.card.list();
+            
+            // Filtrar apenas cartas da coleção específica
+            const filteredCards = allCards.filter(card => {
+              const cardId = card.id || '';
+              return cardId.startsWith(setId + '-');
+            });
+            
+            console.log(`Cartas da coleção ${setId}:`, filteredCards.length);
+            
+            // Buscar dados completos de cada carta usando SDK
+            cardsWithDetails = await Promise.all(
+              filteredCards.map(async (card) => {
+                try {
+                  const cardDetails = await this.tcgdex.card.get(card.id);
+                  return cardDetails;
+                } catch (error) {
+                  console.error(`Erro ao buscar detalhes da carta ${card.id}:`, error);
+                  return card; // Retornar dados básicos se falhar
+                }
+              })
+            );
+          }
+          
+        } catch (sdkError) {
+          console.log('SDK falhou, usando método HTTP direto...');
+          
+          // Método 3: Fallback para HTTP direto
+          const response = await fetch(`${this.baseUrl}/cards`);
+          const allCards = await response.json();
+          
+          const filteredCards = allCards.filter(card => {
+            const cardId = card.id || '';
+            return cardId.startsWith(setId + '-');
+          });
+          
+          cardsWithDetails = await Promise.all(
+            filteredCards.map(async (card) => {
+              try {
+                const cardResponse = await fetch(`${this.baseUrl}/cards/${card.id}`);
+                const cardDetails = await cardResponse.json();
+                return cardDetails;
+              } catch (error) {
+                console.error(`Erro ao buscar detalhes da carta ${card.id}:`, error);
+                return card;
+              }
+            })
+          );
+        }
         
         // Salvar no cache
         await CacheService.setCachedCards(setId, cardsWithDetails);

@@ -17,8 +17,26 @@ const CardDetailScreen = ({ route }) => {
   const { card } = route.params;
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [setInfo, setSetInfo] = useState(null);
 
   const imageUrl = TCGdexService.getImageURL(card, 'high', 'png');
+
+  // Buscar informações completas do set se não estiverem disponíveis
+  useEffect(() => {
+    const fetchSetInfo = async () => {
+      if (card.set?.id) {
+        try {
+          console.log('Buscando informações do set:', card.set.id);
+          const set = await TCGdexService.getSet(card.set.id);
+          setSetInfo(set);
+        } catch (error) {
+          console.error('Erro ao buscar informações do set:', error);
+        }
+      }
+    };
+
+    fetchSetInfo();
+  }, [card.set]);
 
 
   const handleImageLoad = () => {
@@ -195,7 +213,9 @@ const CardDetailScreen = ({ route }) => {
           {card.name}
           {card.suffix && <Text style={styles.suffix}> {card.suffix}</Text>}
         </Text>
-        <Text style={styles.cardNumber}>{card.localId}/{card.set.cardCount.total}</Text>
+        <Text style={styles.cardNumber}>
+          {card.localId || card.number || 'N/A'}/{setInfo?.cardCount?.total || card.set?.cardCount?.total || 'N/A'}
+        </Text>
       </View>
       
       {/* Informações Básicas do Pokemon */}
@@ -251,10 +271,12 @@ const CardDetailScreen = ({ route }) => {
             </View>
           )}
           
-          {card.set && (
+          {(card.set || setInfo) && (
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Coleção</Text>
-              <Text style={styles.infoValue}>{card.set.name}</Text>
+              <Text style={styles.infoValue}>
+                {setInfo?.name || card.set?.name || 'N/A'}
+              </Text>
             </View>
           )}
           
@@ -269,10 +291,10 @@ const CardDetailScreen = ({ route }) => {
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Status Legal</Text>
               <View style={styles.legalContainer}>
-                {card.legal.standard && (
+                {card.legal?.standard && (
                   <Text style={styles.legalText}>Standard</Text>
                 )}
-                {card.legal.expanded && (
+                {card.legal?.expanded && (
                   <Text style={styles.legalText}>Expanded</Text>
                 )}
               </View>
@@ -286,16 +308,16 @@ const CardDetailScreen = ({ route }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Variantes Disponíveis</Text>
           <View style={styles.variantsContainer}>
-            {card.variants.normal && (
+            {card.variants?.normal && (
               <Text style={styles.variantText}>Normal</Text>
             )}
-            {card.variants.holo && (
+            {card.variants?.holo && (
               <Text style={styles.variantText}>Holo</Text>
             )}
-            {card.variants.reverse && (
+            {card.variants?.reverse && (
               <Text style={styles.variantText}>Reverse</Text>
             )}
-            {card.variants.firstEdition && (
+            {card.variants?.firstEdition && (
               <Text style={styles.variantText}>Primeira Edição</Text>
             )}
           </View>

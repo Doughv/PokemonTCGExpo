@@ -38,9 +38,11 @@ const CardItem = ({ card, onPress, itemWidth }) => {
 
   const loadLocalImage = async () => {
     try {
-      const localPath = await ImageDownloadService.getLocalImagePath(card.id, card.set.id);
-      if (localPath) {
-        setLocalImagePath(localPath);
+      if (card.set?.id) {
+        const localPath = await ImageDownloadService.getLocalImagePath(card.id, card.set.id);
+        if (localPath) {
+          setLocalImagePath(localPath);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar imagem local:', error);

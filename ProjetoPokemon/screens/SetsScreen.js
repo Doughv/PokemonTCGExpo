@@ -33,7 +33,26 @@ const SetsScreen = ({ navigation, route }) => {
       setLoading(true);
       console.log('🔍 Carregando expansões da série:', seriesName);
       
-      const setsData = await TCGdexService.getSetsBySeries(seriesId);
+      // Buscar configurações salvas
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const savedExpansions = await AsyncStorage.getItem('selectedExpansions');
+      
+      let setsData;
+      if (savedExpansions) {
+        // Usar expansões filtradas baseadas nas configurações do usuário
+        const selectedExpansionIds = JSON.parse(savedExpansions);
+        const allSets = await TCGdexService.getAllSets();
+        
+        // Filtrar apenas expansões da série atual que estão nas configurações
+        setsData = allSets.filter(set => 
+          set.id.startsWith(seriesId) && selectedExpansionIds.includes(set.id)
+        );
+        console.log('Expansões filtradas baseadas nas configurações:', setsData.length);
+      } else {
+        // Usar método padrão se não há configurações
+        setsData = await TCGdexService.getSetsBySeries(seriesId);
+        console.log('Expansões padrão:', setsData.length);
+      }
       
       console.log('Dados recebidos:', setsData.length, 'expansões');
       

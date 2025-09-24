@@ -45,8 +45,13 @@ class TCGdexService {
     this.language = language;
     this.baseUrl = `https://api.tcgdex.net/v2/${language}`;
     try {
+      console.log('Tentando inicializar SDK TCGdex com idioma:', language);
       this.tcgdex = new TCGdex(language);
       console.log('SDK TCGdex inicializado com sucesso');
+      console.log('SDK disponível:', !!this.tcgdex);
+      console.log('SDK series:', !!this.tcgdex?.series);
+      console.log('SDK sets:', !!this.tcgdex?.set);
+      console.log('SDK cards:', !!this.tcgdex?.card);
     } catch (error) {
       console.error('Erro ao inicializar SDK TCGdex:', error);
       this.tcgdex = null;
@@ -58,10 +63,14 @@ class TCGdexService {
     this.language = language;
     this.baseUrl = `https://api.tcgdex.net/v2/${language}`;
     try {
+      console.log('Tentando alterar idioma do SDK para:', language);
       this.tcgdex = new TCGdex(language);
       console.log(`Idioma alterado para: ${language}`);
+      console.log('SDK disponível após mudança:', !!this.tcgdex);
+      console.log('SDK series após mudança:', !!this.tcgdex?.series);
     } catch (error) {
       console.error('Erro ao alterar idioma:', error);
+      this.tcgdex = null;
     }
   }
 
@@ -374,6 +383,121 @@ class TCGdexService {
   // Obter URL da imagem da carta em baixa resolução
   getCardImageUrlLow(cardId, setId) {
     return this.getCardImageUrl(cardId, setId, 'low');
+  }
+
+  // Buscar todas as séries disponíveis para o idioma atual
+  async getAllSeries() {
+    try {
+      console.log('Buscando todas as séries...');
+      
+      if (!this.tcgdex) {
+        throw new Error('SDK tcgdex não inicializado');
+      }
+      
+      const allSeries = await this.tcgdex.series.list();
+      console.log('Todas as séries encontradas:', allSeries.length);
+      return allSeries;
+    } catch (error) {
+      console.error('Erro ao buscar todas as séries:', error);
+      throw error;
+    }
+  }
+
+  // Buscar todas as expansões disponíveis para o idioma atual
+  async getAllSets() {
+    try {
+      console.log('Buscando todas as expansões...');
+      
+      if (!this.tcgdex) {
+        throw new Error('SDK tcgdex não inicializado');
+      }
+      
+      const allSets = await this.tcgdex.set.list();
+      console.log('Todas as expansões encontradas:', allSets.length);
+      return allSets;
+    } catch (error) {
+      console.error('Erro ao buscar todas as expansões:', error);
+      throw error;
+    }
+  }
+
+  // Buscar expansões filtradas por configurações do usuário
+  async getFilteredSets() {
+    try {
+      console.log('Buscando expansões filtradas...');
+      
+      // Buscar configurações salvas
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const savedExpansions = await AsyncStorage.getItem('selectedExpansions');
+      
+      if (!savedExpansions) {
+        console.log('Nenhuma expansão selecionada, retornando todas');
+        return await this.getAllSets();
+      }
+      
+      const selectedExpansionIds = JSON.parse(savedExpansions);
+      const allSets = await this.getAllSets();
+      
+      // Filtrar apenas as expansões selecionadas
+      const filteredSets = allSets.filter(set => 
+        selectedExpansionIds.includes(set.id)
+      );
+      
+      console.log('Expansões filtradas:', filteredSets.length);
+      return filteredSets;
+    } catch (error) {
+      console.error('Erro ao buscar expansões filtradas:', error);
+      throw error;
+    }
+  }
+
+  // Buscar cartas filtradas por configurações do usuário
+  async getFilteredCards() {
+    try {
+      console.log('Buscando cartas filtradas...');
+      
+      // Buscar configurações salvas
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const savedExpansions = await AsyncStorage.getItem('selectedExpansions');
+      
+      if (!savedExpansions) {
+        console.log('Nenhuma expansão selecionada, retornando todas as cartas');
+        return await this.getAllCards();
+      }
+      
+      const selectedExpansionIds = JSON.parse(savedExpansions);
+      const allCards = await this.getAllCards();
+      
+      // Filtrar apenas cartas das expansões selecionadas
+      const filteredCards = allCards.filter(card => {
+        const setId = card.set?.id || card.id?.split('-')[0];
+        return selectedExpansionIds.includes(setId);
+      });
+      
+      console.log('Cartas filtradas:', filteredCards.length);
+      return filteredCards;
+    } catch (error) {
+      console.error('Erro ao buscar cartas filtradas:', error);
+      throw error;
+    }
+  }
+
+  // Buscar todas as cartas (método auxiliar)
+  async getAllCards() {
+    try {
+      console.log('Buscando todas as cartas...');
+      
+      if (!this.tcgdex) {
+        throw new Error('SDK tcgdex não inicializado');
+      }
+      
+      const allCards = await this.tcgdex.card.list();
+      console.log('Todas as cartas encontradas:', allCards.length);
+      return allCards;
+    } catch (error) {
+      console.error('Erro ao buscar todas as cartas:', error);
+      throw error;
+    }
   }
 }
 

@@ -28,7 +28,23 @@ const SeriesScreen = ({ navigation }) => {
     try {
       setLoading(true);
       console.log('Carregando séries...');
-      const seriesData = await TCGdexService.getSeries();
+      
+      // Buscar configurações salvas
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const savedSeries = await AsyncStorage.getItem('selectedSeries');
+      
+      let seriesData;
+      if (savedSeries) {
+        // Usar séries filtradas baseadas nas configurações do usuário
+        const selectedSeriesIds = JSON.parse(savedSeries);
+        const allSeries = await TCGdexService.getAllSeries();
+        seriesData = allSeries.filter(series => selectedSeriesIds.includes(series.id));
+        console.log('Séries filtradas baseadas nas configurações:', seriesData.length);
+      } else {
+        // Usar método padrão se não há configurações
+        seriesData = await TCGdexService.getSeries();
+        console.log('Séries padrão:', seriesData.length);
+      }
       
       console.log('Dados recebidos:', seriesData.length, 'séries');
       

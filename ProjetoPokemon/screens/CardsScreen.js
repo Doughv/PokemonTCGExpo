@@ -44,7 +44,27 @@ const CardsScreen = ({ route, navigation }) => {
       setLoading(true);
       console.log('🔍 Carregando cartas da expansão:', setName);
       
-      const cardsData = await TCGdexService.getCardsBySet(setId);
+      // Buscar configurações salvas
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const savedExpansions = await AsyncStorage.getItem('selectedExpansions');
+      
+      let cardsData;
+      if (savedExpansions) {
+        // Verificar se esta expansão está nas configurações do usuário
+        const selectedExpansionIds = JSON.parse(savedExpansions);
+        if (selectedExpansionIds.includes(setId)) {
+          cardsData = await TCGdexService.getCardsBySet(setId);
+          console.log('Cartas carregadas (expansão selecionada):', cardsData.length);
+        } else {
+          // Se a expansão não está selecionada, mostrar mensagem
+          cardsData = [];
+          console.log('Expansão não selecionada nas configurações');
+        }
+      } else {
+        // Usar método padrão se não há configurações
+        cardsData = await TCGdexService.getCardsBySet(setId);
+        console.log('Cartas padrão:', cardsData.length);
+      }
       
       // Ordenar cartas por número
       const sortedCards = cardsData.sort((a, b) => {

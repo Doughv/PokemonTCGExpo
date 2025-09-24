@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,30 @@ import {
   TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MainScreen = ({ navigation }) => {
+  const [currentLanguage, setCurrentLanguage] = useState('pt');
+
+  useEffect(() => {
+    loadLanguageSettings();
+  }, []);
+
+  const loadLanguageSettings = async () => {
+    try {
+      const savedLanguage = await AsyncStorage.getItem('selectedLanguage');
+      if (savedLanguage) {
+        setCurrentLanguage(savedLanguage);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações de idioma:', error);
+    }
+  };
+
+  const handleLanguageConfigPress = (language) => {
+    navigation.navigate('LanguageConfig', { language });
+  };
+
   const handleCollectionsPress = () => {
     navigation.navigate('Series');
   };
@@ -18,6 +40,29 @@ const MainScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header com botões de idioma */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={[styles.languageButton, currentLanguage === 'pt' && styles.activeLanguageButton]}
+          onPress={() => handleLanguageConfigPress('pt')}
+        >
+          <Text style={[styles.languageButtonText, currentLanguage === 'pt' && styles.activeLanguageButtonText]}>
+            TCG BR
+          </Text>
+        </TouchableOpacity>
+        
+        <View style={styles.separator} />
+        
+        <TouchableOpacity 
+          style={[styles.languageButton, currentLanguage === 'en' && styles.activeLanguageButton]}
+          onPress={() => handleLanguageConfigPress('en')}
+        >
+          <Text style={[styles.languageButtonText, currentLanguage === 'en' && styles.activeLanguageButtonText]}>
+            EN TCG
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.content}>
         <Text style={styles.title}>Pokémon TCG V2</Text>
         <Text style={styles.subtitle}>Seu guia completo para cartas Pokémon</Text>
@@ -54,6 +99,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 50, // Espaço para a status bar
+    paddingBottom: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  languageButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    marginHorizontal: 5,
+  },
+  activeLanguageButton: {
+    backgroundColor: '#007AFF',
+  },
+  languageButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  activeLanguageButtonText: {
+    color: '#fff',
+  },
+  separator: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#ccc',
+    marginHorizontal: 10,
   },
   content: {
     flex: 1,

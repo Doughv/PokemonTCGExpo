@@ -13,6 +13,7 @@ import CardsScreen from './screens/CardsScreen';
 import CardDetailScreen from './screens/CardDetailScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import DownloadsScreen from './screens/DownloadsScreen';
+import LanguageConfigScreen from './screens/LanguageConfigScreen';
 
 const Stack = createStackNavigator();
 
@@ -86,6 +87,14 @@ export default function App() {
           name="Downloads" 
           component={DownloadsScreen}
           options={{ title: 'Downloads' }}
+        />
+        <Stack.Screen 
+          name="LanguageConfig" 
+          component={LanguageConfigScreen}
+          options={{ 
+            title: 'Configurações de Idioma',
+            headerShown: false 
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

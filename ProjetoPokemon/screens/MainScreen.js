@@ -89,7 +89,7 @@ const MainScreen = ({ navigation }) => {
           onPress={handleCollectionsPress}
         >
           <View style={styles.buttonContent}>
-            <Text style={styles.buttonIcon}>📖</Text>
+            <Text style={styles.buttonIcon}>📚</Text>
             <Text style={styles.buttonText}>COLEÇÕES</Text>
           </View>
         </TouchableOpacity>

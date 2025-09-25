@@ -115,7 +115,7 @@ class OfflineService {
   // Verificar atualizações comparando com API
   async checkForUpdates(apiData) {
     try {
-      console.log('🔄 Verificando atualizações...');
+      console.log('Verificando atualizações...');
       
       const offlineSummary = await this.getOfflineSummary();
       if (!offlineSummary.hasData) {
@@ -132,7 +132,7 @@ class OfflineService {
 
       const offlineCounts = offlineSummary.counts;
 
-      console.log('📊 Comparando contagens:');
+      console.log('Comparando contagens:');
       console.log('  API:', apiCounts);
       console.log('  Offline:', offlineCounts);
 
@@ -146,7 +146,7 @@ class OfflineService {
       const hasUpdates = Object.values(differences).some(diff => diff > 0);
 
       if (hasUpdates) {
-        console.log('🔄 Atualizações encontradas:', differences);
+        console.log('Atualizações encontradas:', differences);
         return {
           needsUpdate: true,
           differences,
@@ -170,7 +170,7 @@ class OfflineService {
   // Atualizar dados offline
   async updateOfflineData(newData) {
     try {
-      console.log('🔄 Atualizando dados offline...');
+      console.log('Atualizando dados offline...');
       
       // Carregar dados atuais
       const currentSeries = await this.loadFromCache('series') || [];
@@ -231,7 +231,7 @@ class OfflineService {
   // Limpar dados offline
   async clearOfflineData() {
     try {
-      console.log('🗑️ Limpando dados offline...');
+      console.log('Limpando dados offline...');
       
       const keys = Object.values(this.cacheKeys);
       await AsyncStorage.multiRemove(keys);

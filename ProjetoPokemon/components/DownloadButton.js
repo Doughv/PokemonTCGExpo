@@ -70,7 +70,7 @@ const DownloadButton = ({ set, cards, onDownloadComplete }) => {
     if (downloading) {
       return `Baixando... ${Math.round(progress)}%`;
     }
-    return '⬇️';
+    return 'Download';
   };
 
   const getButtonColor = () => {
@@ -124,9 +124,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   button: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   progressContainer: {

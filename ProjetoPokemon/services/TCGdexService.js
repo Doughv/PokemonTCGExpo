@@ -641,7 +641,7 @@ class TCGdexService {
   // Verificar atualizações comparando com dados offline
   async checkForUpdates() {
     try {
-      console.log('🔄 Verificando atualizações...');
+      console.log('Verificando atualizações...');
       
       // Verificar se há dados offline
       const hasOfflineData = await OfflineService.hasOfflineData();
@@ -662,7 +662,7 @@ class TCGdexService {
       const updateCheck = await OfflineService.checkForUpdates(apiData);
       
       if (updateCheck.needsUpdate) {
-        console.log('🔄 Atualizações disponíveis:', updateCheck);
+        console.log('Atualizações disponíveis:', updateCheck);
         return {
           needsUpdate: true,
           newItems: updateCheck.newItems || updateCheck.differences,
@@ -681,7 +681,7 @@ class TCGdexService {
   // Atualizar dados offline
   async updateOfflineData() {
     try {
-      console.log('🔄 Atualizando dados offline...');
+      console.log('Atualizando dados offline...');
       
       // Buscar dados atuais da API
       const apiData = {

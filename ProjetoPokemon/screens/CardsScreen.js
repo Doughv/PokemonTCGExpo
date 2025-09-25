@@ -69,7 +69,7 @@ const CardsScreen = ({ route, navigation }) => {
               console.log(`✅ Encontradas ${setCards.length} cartas offline para ${setId}`);
               cardsData = setCards;
             } else {
-              console.log('⚠️ Nenhuma carta offline encontrada, usando SDK...');
+              console.log('Nenhuma carta offline encontrada, usando SDK...');
               cardsData = await TCGdexService.getCardsBySet(setId);
             }
           } catch (error) {

@@ -104,7 +104,27 @@ const SeriesScreen = ({ navigation }) => {
 
   const handleUpdateData = async () => {
     try {
+      // Verificar rate limit (1 atualização por dia)
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const lastUpdateKey = 'lastUpdateCheck';
+      const lastUpdate = await AsyncStorage.getItem(lastUpdateKey);
+      const now = new Date().getTime();
+      const oneDay = 24 * 60 * 60 * 1000; // 24 horas em millisegundos
+      
+      if (lastUpdate && (now - parseInt(lastUpdate)) < oneDay) {
+        const nextUpdate = new Date(parseInt(lastUpdate) + oneDay);
+        Alert.alert(
+          'Atualização Limitada',
+          `Você já verificou atualizações hoje. Próxima verificação disponível em: ${nextUpdate.toLocaleDateString('pt-BR')} às ${nextUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
       setUpdating(true);
+      
+      // Salvar timestamp da verificação
+      await AsyncStorage.setItem(lastUpdateKey, now.toString());
       
       // Verificar atualizações
       const updateCheck = await TCGdexService.checkForUpdates();
@@ -210,7 +230,7 @@ const SeriesScreen = ({ navigation }) => {
             />
           ) : (
             <View style={styles.placeholderLogo}>
-              <Text style={styles.placeholderText}>📚</Text>
+              <Text style={styles.placeholderText}>📖</Text>
             </View>
           )}
         </View>
@@ -239,31 +259,41 @@ const SeriesScreen = ({ navigation }) => {
     <View style={styles.container}>
       {/* Header com botão de atualização */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Coleções Pokémon</Text>
-        <TouchableOpacity 
-          style={[styles.updateButton, updating && styles.updateButtonDisabled]} 
-          onPress={handleUpdateData}
-          disabled={updating}
-        >
-          {updating ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.updateButtonText}>🔄 Atualizar</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Disclaimer */}
-      <View style={styles.disclaimer}>
-        <Text style={styles.disclaimerText}>
-          💡 O botão "Atualizar" verifica se há novas coleções, expansões ou cartas disponíveis na API e baixa apenas o que é novo, mantendo seus dados sempre atualizados.
-        </Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Coleções</Text>
+          <Text style={styles.headerSubtitle}>{series.length} coleções disponíveis</Text>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            style={[styles.updateButton, updating && styles.updateButtonDisabled]} 
+            onPress={handleUpdateData}
+            disabled={updating}
+          >
+            {updating ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.updateButtonText}>Verificar Atualizações</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.helpButton}
+            onPress={() => {
+              Alert.alert(
+                'Verificar Atualização',
+                'O botão "Verificar Atualização" verifica se há novas coleções, expansões ou cartas disponíveis na API e baixa apenas o que é novo, mantendo seus dados sempre atualizados.',
+                [{ text: 'OK' }]
+              );
+            }}
+          >
+            <Text style={styles.helpButtonText}>?</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Resumo dos dados offline */}
       {offlineSummary && offlineSummary.hasData && (
         <View style={styles.summaryContainer}>
-          <Text style={styles.summaryTitle}>📊 Dados Offline</Text>
+          <Text style={styles.summaryTitle}>Dados Offline</Text>
           <Text style={styles.summaryText}>
             {offlineSummary.counts.series} coleções • {offlineSummary.counts.sets} expansões • {offlineSummary.counts.cards} cartas
           </Text>
@@ -304,14 +334,27 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
+  headerLeft: {
+    flex: 1,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
   updateButton: {
     backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     flexDirection: 'row',
@@ -322,22 +365,23 @@ const styles = StyleSheet.create({
   },
   updateButtonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: 5,
   },
-  disclaimer: {
-    backgroundColor: '#e3f2fd',
-    margin: 15,
-    padding: 12,
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#2196f3',
+  helpButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
-  disclaimerText: {
-    fontSize: 13,
-    color: '#1976d2',
-    lineHeight: 18,
+  helpButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#666',
   },
   summaryContainer: {
     backgroundColor: '#fff',

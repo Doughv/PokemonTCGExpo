@@ -31,7 +31,7 @@ const SetsScreen = ({ navigation, route }) => {
   const loadSets = async () => {
     try {
       setLoading(true);
-      console.log('🔍 Carregando expansões da série:', seriesName);
+      console.log('Carregando expansões da série:', seriesName);
       
       // Buscar configurações salvas específicas do idioma atual
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
@@ -103,18 +103,17 @@ const SetsScreen = ({ navigation, route }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Coleções Pokemon TCG</Text>
-        <Text style={styles.subtitle}>
-          {sets.length} coleções disponíveis
-        </Text>
-      </View>
-
-      <View style={styles.downloadsButtonContainer}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>Expansões</Text>
+          <Text style={styles.subtitle}>
+            {sets.length} expansões disponíveis
+          </Text>
+        </View>
         <TouchableOpacity 
           style={styles.downloadsButton}
           onPress={() => navigation.navigate('Downloads')}
         >
-          <Text style={styles.downloadsButtonText}>📥 Downloads</Text>
+          <Text style={styles.downloadsButtonText}>Downloads</Text>
         </TouchableOpacity>
       </View>
       
@@ -151,13 +150,19 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
+  headerLeft: {
+    flex: 1,
+  },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
@@ -174,15 +179,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 10,
   },
-  downloadsButtonContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-  },
   downloadsButton: {
     backgroundColor: '#6c757d',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
   },
   downloadsButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });

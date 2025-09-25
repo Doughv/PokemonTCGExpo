@@ -75,10 +75,10 @@ const LanguageConfigScreen = ({ navigation, route }) => {
       // Alterar idioma do serviço
       await tcgdexService.setLanguage(selectedLanguage);
       
-      // Buscar séries usando método do serviço
-      const seriesData = await tcgdexService.getAllSeries();
+      // Buscar séries usando dados offline primeiro
+      const seriesData = await tcgdexService.getSeries();
       setSeries(seriesData);
-      console.log('Séries carregadas:', seriesData.length);
+      console.log('Séries carregadas offline:', seriesData.length);
     } catch (error) {
       console.error('Erro ao carregar séries:', error);
       Alert.alert('Erro', 'Não foi possível carregar as séries. Tente novamente.');
@@ -94,7 +94,8 @@ const LanguageConfigScreen = ({ navigation, route }) => {
       
       for (const seriesId of selectedSeries) {
         try {
-          const seriesExpansions = await tcgdexService.getSetsBySeries(seriesId);
+          // Usar dados offline primeiro
+          const seriesExpansions = await tcgdexService.getFilteredSets(seriesId);
           expansionsData[seriesId] = seriesExpansions;
         } catch (error) {
           console.error(`Erro ao carregar expansões da série ${seriesId}:`, error);
@@ -103,7 +104,7 @@ const LanguageConfigScreen = ({ navigation, route }) => {
       }
       
       setExpansions(expansionsData);
-      console.log('Expansões carregadas:', Object.keys(expansionsData).length);
+      console.log('Expansões carregadas offline:', Object.keys(expansionsData).length);
     } catch (error) {
       console.error('Erro ao carregar expansões:', error);
       Alert.alert('Erro', 'Não foi possível carregar as expansões. Tente novamente.');

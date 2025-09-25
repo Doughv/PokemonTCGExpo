@@ -589,6 +589,42 @@ class TCGdexService {
       try {
         const testSeries = await this.tcgdex.serie.list();
         console.log('✅ SDK funcionando! Séries encontradas:', testSeries.length);
+        
+        // Investigar campos de metadata disponíveis
+        if (testSeries.length > 0) {
+          console.log('🔍 Investigando campos de metadata...');
+          const firstSerie = testSeries[0];
+          console.log('Campos da série:', Object.keys(firstSerie));
+          // Evitar erro de JSON circular
+          const serieInfo = {
+            id: firstSerie.id,
+            name: firstSerie.name,
+            logo: firstSerie.logo
+          };
+          console.log('Exemplo de série:', JSON.stringify(serieInfo, null, 2));
+        }
+        
+        // Testar cards para ver campo 'updated'
+        try {
+          const testCards = await this.tcgdex.card.list();
+          if (testCards.length > 0) {
+            console.log('🔍 Investigando campos de cards...');
+            const firstCard = testCards[0];
+            console.log('Campos do card:', Object.keys(firstCard));
+            console.log('Campo updated:', firstCard.updated);
+            // Evitar erro de JSON circular
+            const cardInfo = {
+              id: firstCard.id,
+              name: firstCard.name,
+              updated: firstCard.updated,
+              image: firstCard.image
+            };
+            console.log('Exemplo de card:', JSON.stringify(cardInfo, null, 2));
+          }
+        } catch (e) {
+          console.log('❌ Erro ao testar cards:', e.message);
+        }
+        
         return true;
       } catch (e) {
         console.log('❌ SDK não está funcionando:', e.message);

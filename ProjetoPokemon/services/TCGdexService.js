@@ -2,6 +2,7 @@
 import '../polyfills';
 import TCGdex from '@tcgdex/sdk';
 import CacheService from './CacheService';
+import OfflineService from './OfflineService';
 
 // Polyfill robusto para APIs do navegador no React Native
 if (typeof global !== 'undefined') {
@@ -634,6 +635,97 @@ class TCGdexService {
     } catch (error) {
       console.error('❌ Erro no teste do SDK:', error);
       return false;
+    }
+  }
+
+  // Verificar atualizações comparando com dados offline
+  async checkForUpdates() {
+    try {
+      console.log('🔄 Verificando atualizações...');
+      
+      // Verificar se há dados offline
+      const hasOfflineData = await OfflineService.hasOfflineData();
+      if (!hasOfflineData) {
+        console.log('📁 Nenhum dado offline encontrado, carregando dados iniciais...');
+        await OfflineService.loadLocalData();
+        return { needsUpdate: false, message: 'Dados offline carregados pela primeira vez' };
+      }
+
+      // Buscar dados atuais da API
+      const apiData = {
+        series: await this.tcgdex.serie.list(),
+        sets: await this.tcgdex.set.list(),
+        cards: await this.tcgdex.card.list()
+      };
+
+      // Verificar atualizações
+      const updateCheck = await OfflineService.checkForUpdates(apiData);
+      
+      if (updateCheck.needsUpdate) {
+        console.log('🔄 Atualizações disponíveis:', updateCheck);
+        return {
+          needsUpdate: true,
+          newItems: updateCheck.newItems || updateCheck.differences,
+          message: `Encontradas ${updateCheck.newItems?.series || 0} séries, ${updateCheck.newItems?.sets || 0} expansões e ${updateCheck.newItems?.cards || 0} cartas novas`
+        };
+      }
+
+      return { needsUpdate: false, message: 'Dados estão atualizados' };
+
+    } catch (error) {
+      console.error('❌ Erro ao verificar atualizações:', error);
+      return { needsUpdate: false, error: error.message };
+    }
+  }
+
+  // Atualizar dados offline
+  async updateOfflineData() {
+    try {
+      console.log('🔄 Atualizando dados offline...');
+      
+      // Buscar dados atuais da API
+      const apiData = {
+        series: await this.tcgdex.serie.list(),
+        sets: await this.tcgdex.set.list(),
+        cards: await this.tcgdex.card.list()
+      };
+
+      // Atualizar dados offline
+      const result = await OfflineService.updateOfflineData(apiData);
+      
+      if (result.success) {
+        console.log('✅ Dados offline atualizados com sucesso');
+        return {
+          success: true,
+          newCounts: result.newCounts,
+          message: 'Dados atualizados com sucesso!'
+        };
+      } else {
+        console.log('❌ Erro ao atualizar dados offline:', result.error);
+        return {
+          success: false,
+          error: result.error,
+          message: 'Erro ao atualizar dados'
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao atualizar dados offline:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: 'Erro ao atualizar dados'
+      };
+    }
+  }
+
+  // Obter resumo dos dados offline
+  async getOfflineSummary() {
+    try {
+      return await OfflineService.getOfflineSummary();
+    } catch (error) {
+      console.error('❌ Erro ao obter resumo offline:', error);
+      return { hasData: false };
     }
   }
 }

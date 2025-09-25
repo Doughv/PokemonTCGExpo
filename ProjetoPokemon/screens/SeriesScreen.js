@@ -19,9 +19,12 @@ const SeriesScreen = ({ navigation }) => {
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [offlineSummary, setOfflineSummary] = useState(null);
 
   useEffect(() => {
     loadSeries();
+    loadOfflineSummary();
   }, []);
 
   const loadSeries = async () => {
@@ -86,7 +89,56 @@ const SeriesScreen = ({ navigation }) => {
   const onRefresh = async () => {
     setRefreshing(true);
     await loadSeries();
+    await loadOfflineSummary();
     setRefreshing(false);
+  };
+
+  const loadOfflineSummary = async () => {
+    try {
+      const summary = await TCGdexService.getOfflineSummary();
+      setOfflineSummary(summary);
+    } catch (error) {
+      console.error('Erro ao carregar resumo offline:', error);
+    }
+  };
+
+  const handleUpdateData = async () => {
+    try {
+      setUpdating(true);
+      
+      // Verificar atualizações
+      const updateCheck = await TCGdexService.checkForUpdates();
+      
+      if (updateCheck.needsUpdate) {
+        Alert.alert(
+          'Atualizações Disponíveis',
+          updateCheck.message,
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { 
+              text: 'Atualizar', 
+              onPress: async () => {
+                const result = await TCGdexService.updateOfflineData();
+                if (result.success) {
+                  Alert.alert('Sucesso', result.message);
+                  await loadOfflineSummary();
+                } else {
+                  Alert.alert('Erro', result.message);
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Atualizado', updateCheck.message);
+      }
+      
+    } catch (error) {
+      console.error('Erro ao verificar atualizações:', error);
+      Alert.alert('Erro', 'Erro ao verificar atualizações');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getLogoUrl = (series) => {
@@ -186,6 +238,42 @@ const SeriesScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Header com botão de atualização */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Coleções Pokémon</Text>
+        <TouchableOpacity 
+          style={[styles.updateButton, updating && styles.updateButtonDisabled]} 
+          onPress={handleUpdateData}
+          disabled={updating}
+        >
+          {updating ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.updateButtonText}>🔄 Atualizar</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Disclaimer */}
+      <View style={styles.disclaimer}>
+        <Text style={styles.disclaimerText}>
+          💡 O botão "Atualizar" verifica se há novas coleções, expansões ou cartas disponíveis na API e baixa apenas o que é novo, mantendo seus dados sempre atualizados.
+        </Text>
+      </View>
+
+      {/* Resumo dos dados offline */}
+      {offlineSummary && offlineSummary.hasData && (
+        <View style={styles.summaryContainer}>
+          <Text style={styles.summaryTitle}>📊 Dados Offline</Text>
+          <Text style={styles.summaryText}>
+            {offlineSummary.counts.series} coleções • {offlineSummary.counts.sets} expansões • {offlineSummary.counts.cards} cartas
+          </Text>
+          <Text style={styles.summaryDate}>
+            Última atualização: {new Date(offlineSummary.lastUpdate).toLocaleDateString('pt-BR')}
+          </Text>
+        </View>
+      )}
+
       <FlatList
         data={series}
         renderItem={renderSeriesItem}
@@ -206,6 +294,78 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  updateButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  updateButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  updateButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 5,
+  },
+  disclaimer: {
+    backgroundColor: '#e3f2fd',
+    margin: 15,
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196f3',
+  },
+  disclaimerText: {
+    fontSize: 13,
+    color: '#1976d2',
+    lineHeight: 18,
+  },
+  summaryContainer: {
+    backgroundColor: '#fff',
+    margin: 15,
+    padding: 15,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  summaryDate: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
   },
   loadingContainer: {
     flex: 1,

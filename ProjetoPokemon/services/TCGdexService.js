@@ -56,21 +56,32 @@ class TCGdexService {
       this.tcgdex = new TCGdex(language);
       console.log('SDK TCGdex inicializado com sucesso');
       console.log('SDK disponível:', !!this.tcgdex);
-      console.log('SDK series:', !!this.tcgdex?.series);
-      console.log('SDK sets:', !!this.tcgdex?.set);
-      console.log('SDK cards:', !!this.tcgdex?.card);
       
-      // Verificar se as propriedades necessárias estão disponíveis
-      if (this.tcgdex && this.tcgdex.series && typeof this.tcgdex.series.list === 'function') {
-        console.log('SDK series.list está disponível');
-      } else {
-        console.warn('SDK series.list não está disponível');
-      }
-      
-      if (this.tcgdex && this.tcgdex.set && typeof this.tcgdex.set.list === 'function') {
-        console.log('SDK set.list está disponível');
-      } else {
-        console.warn('SDK set.list não está disponível');
+      // Debug detalhado do SDK
+      if (this.tcgdex) {
+        console.log('Propriedades do SDK:', Object.keys(this.tcgdex));
+        console.log('SDK serie (singular):', !!this.tcgdex?.serie);
+        console.log('SDK set:', !!this.tcgdex?.set);
+        console.log('SDK card:', !!this.tcgdex?.card);
+        
+        // Verificar métodos disponíveis
+        if (this.tcgdex.serie && typeof this.tcgdex.serie.list === 'function') {
+          console.log('✅ SDK serie.list está disponível');
+        } else {
+          console.warn('❌ SDK serie.list não está disponível');
+        }
+        
+        if (this.tcgdex.set && typeof this.tcgdex.set.list === 'function') {
+          console.log('✅ SDK set.list está disponível');
+        } else {
+          console.warn('❌ SDK set.list não está disponível');
+        }
+        
+        if (this.tcgdex.card && typeof this.tcgdex.card.list === 'function') {
+          console.log('✅ SDK card.list está disponível');
+        } else {
+          console.warn('❌ SDK card.list não está disponível');
+        }
       }
       
     } catch (error) {
@@ -96,7 +107,7 @@ class TCGdexService {
     await this.initializeSDK(language);
     console.log(`Idioma alterado para: ${language}`);
     console.log('SDK disponível após mudança:', !!this.tcgdex);
-    console.log('SDK series após mudança:', !!this.tcgdex?.series);
+    console.log('SDK serie após mudança:', !!this.tcgdex?.serie);
   }
 
   // Usar a propriedade image da carta ou construir URL manualmente
@@ -186,11 +197,11 @@ class TCGdexService {
       if (!allSeries) {
         console.log('Buscando séries via SDK...');
         
-        // Verificar se o SDK está disponível e tem a propriedade series
-        if (this.tcgdex && this.tcgdex.series && typeof this.tcgdex.series.list === 'function') {
+        // Verificar se o SDK está disponível e tem a propriedade serie
+        if (this.tcgdex && this.tcgdex.serie && typeof this.tcgdex.serie.list === 'function') {
           try {
             // Usar SDK para buscar séries
-            allSeries = await this.tcgdex.series.list();
+            allSeries = await this.tcgdex.serie.list();
             console.log('Séries encontradas via SDK:', allSeries.length);
           } catch (sdkError) {
             console.log('SDK falhou, usando HTTP direto...', sdkError.message);
@@ -199,7 +210,7 @@ class TCGdexService {
             allSeries = await response.json();
           }
         } else {
-          console.log('SDK não disponível ou series.list não encontrado, usando HTTP direto...');
+          console.log('SDK não disponível ou serie.list não encontrado, usando HTTP direto...');
           // Fallback para HTTP direto
           const response = await fetch(`${this.baseUrl}/series`);
           allSeries = await response.json();
@@ -420,10 +431,10 @@ class TCGdexService {
     try {
       console.log('Buscando todas as séries...');
       
-      // Verificar se o SDK está disponível e tem a propriedade series
-      if (this.tcgdex && this.tcgdex.series && typeof this.tcgdex.series.list === 'function') {
+      // Verificar se o SDK está disponível e tem a propriedade serie
+      if (this.tcgdex && this.tcgdex.serie && typeof this.tcgdex.serie.list === 'function') {
         try {
-          const allSeries = await this.tcgdex.series.list();
+          const allSeries = await this.tcgdex.serie.list();
           console.log('Todas as séries encontradas via SDK:', allSeries.length);
           return allSeries;
         } catch (sdkError) {
@@ -435,7 +446,7 @@ class TCGdexService {
           return allSeries;
         }
       } else {
-        console.log('SDK não disponível ou series.list não encontrado, usando HTTP direto...');
+        console.log('SDK não disponível ou serie.list não encontrado, usando HTTP direto...');
         // Fallback para HTTP direto
         const response = await fetch(`${this.baseUrl}/series`);
         const allSeries = await response.json();
@@ -559,6 +570,34 @@ class TCGdexService {
     } catch (error) {
       console.error('Erro ao buscar todas as cartas:', error);
       throw error;
+    }
+  }
+
+  // Método de teste para verificar SDK
+  async testSDK() {
+    try {
+      console.log('🧪 Testando SDK TCGdex...');
+      
+      if (!this.tcgdex) {
+        console.log('❌ SDK não inicializado');
+        return false;
+      }
+      
+      console.log('✅ SDK inicializado');
+      
+      // Teste rápido de funcionalidade
+      try {
+        const testSeries = await this.tcgdex.serie.list();
+        console.log('✅ SDK funcionando! Séries encontradas:', testSeries.length);
+        return true;
+      } catch (e) {
+        console.log('❌ SDK não está funcionando:', e.message);
+        return false;
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro no teste do SDK:', error);
+      return false;
     }
   }
 }

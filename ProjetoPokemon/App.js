@@ -27,6 +27,12 @@ export default function App() {
           await TCGdexService.setLanguage(savedLanguage);
           console.log('✅ Idioma carregado:', savedLanguage);
         }
+        
+        // Testar SDK após carregar idioma
+        setTimeout(async () => {
+          await TCGdexService.testSDK();
+        }, 2000);
+        
       } catch (error) {
         console.error('❌ Erro ao carregar idioma:', error);
       }

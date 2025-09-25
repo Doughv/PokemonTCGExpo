@@ -87,35 +87,39 @@ class CacheService {
     }
   }
 
-  // Cache para séries
-  async getCachedSeries() {
-    const isValid = await this.isCacheValid(this.cacheKeys.series, this.cacheDuration.series);
+  // Cache para séries (com suporte a idioma)
+  async getCachedSeries(language = 'pt') {
+    const key = `${this.cacheKeys.series}_${language}`;
+    const isValid = await this.isCacheValid(key, this.cacheDuration.series);
     if (isValid) {
-      return await this.getCache(this.cacheKeys.series);
+      return await this.getCache(key);
     }
     return null;
   }
 
-  async setCachedSeries(series) {
-    await this.setCache(this.cacheKeys.series, series);
+  async setCachedSeries(series, language = 'pt') {
+    const key = `${this.cacheKeys.series}_${language}`;
+    await this.setCache(key, series);
   }
 
-  // Cache para sets/expansões
-  async getCachedSets() {
-    const isValid = await this.isCacheValid(this.cacheKeys.sets, this.cacheDuration.sets);
+  // Cache para sets/expansões (com suporte a idioma)
+  async getCachedSets(language = 'pt') {
+    const key = `${this.cacheKeys.sets}_${language}`;
+    const isValid = await this.isCacheValid(key, this.cacheDuration.sets);
     if (isValid) {
-      return await this.getCache(this.cacheKeys.sets);
+      return await this.getCache(key);
     }
     return null;
   }
 
-  async setCachedSets(sets) {
-    await this.setCache(this.cacheKeys.sets, sets);
+  async setCachedSets(sets, language = 'pt') {
+    const key = `${this.cacheKeys.sets}_${language}`;
+    await this.setCache(key, sets);
   }
 
-  // Cache para cartas de um set específico
-  async getCachedCards(setId) {
-    const key = `${this.cacheKeys.cards}_${setId}`;
+  // Cache para cartas de um set específico (com suporte a idioma)
+  async getCachedCards(setId, language = 'pt') {
+    const key = `${this.cacheKeys.cards}_${setId}_${language}`;
     const isValid = await this.isCacheValid(key, this.cacheDuration.cards);
     if (isValid) {
       return await this.getCache(key);
@@ -123,8 +127,8 @@ class CacheService {
     return null;
   }
 
-  async setCachedCards(setId, cards) {
-    const key = `${this.cacheKeys.cards}_${setId}`;
+  async setCachedCards(setId, cards, language = 'pt') {
+    const key = `${this.cacheKeys.cards}_${setId}_${language}`;
     await this.setCache(key, cards);
   }
 
@@ -196,6 +200,24 @@ class CacheService {
   async forceRefreshCache() {
     await this.clearAllCache();
     console.log('🔄 Cache forçado a atualizar');
+  }
+
+  // Limpar cache de um idioma específico
+  async clearLanguageCache(language) {
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      const languageKeys = allKeys.filter(key => 
+        key.includes(`_${language}`) || 
+        key.includes(`_${language}_`)
+      );
+      
+      if (languageKeys.length > 0) {
+        await AsyncStorage.multiRemove(languageKeys);
+        console.log(`✅ Cache do idioma ${language} limpo:`, languageKeys.length, 'itens');
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao limpar cache do idioma ${language}:`, error);
+    }
   }
 }
 

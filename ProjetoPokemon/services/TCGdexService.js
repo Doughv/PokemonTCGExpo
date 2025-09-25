@@ -44,14 +44,46 @@ class TCGdexService {
   constructor(language = 'pt') {
     this.language = language;
     this.baseUrl = `https://api.tcgdex.net/v2/${language}`;
+    this.tcgdex = null;
+    
+    // Inicializar SDK de forma assíncrona para evitar bloqueios
+    this.initializeSDK(language);
+  }
+
+  async initializeSDK(language = 'pt') {
     try {
       console.log('Tentando inicializar SDK TCGdex com idioma:', language);
       this.tcgdex = new TCGdex(language);
       console.log('SDK TCGdex inicializado com sucesso');
       console.log('SDK disponível:', !!this.tcgdex);
-      console.log('SDK series:', !!this.tcgdex?.series);
-      console.log('SDK sets:', !!this.tcgdex?.set);
-      console.log('SDK cards:', !!this.tcgdex?.card);
+      
+      // Debug detalhado do SDK
+      if (this.tcgdex) {
+        console.log('Propriedades do SDK:', Object.keys(this.tcgdex));
+        console.log('SDK serie (singular):', !!this.tcgdex?.serie);
+        console.log('SDK set:', !!this.tcgdex?.set);
+        console.log('SDK card:', !!this.tcgdex?.card);
+        
+        // Verificar métodos disponíveis
+        if (this.tcgdex.serie && typeof this.tcgdex.serie.list === 'function') {
+          console.log('✅ SDK serie.list está disponível');
+        } else {
+          console.warn('❌ SDK serie.list não está disponível');
+        }
+        
+        if (this.tcgdex.set && typeof this.tcgdex.set.list === 'function') {
+          console.log('✅ SDK set.list está disponível');
+        } else {
+          console.warn('❌ SDK set.list não está disponível');
+        }
+        
+        if (this.tcgdex.card && typeof this.tcgdex.card.list === 'function') {
+          console.log('✅ SDK card.list está disponível');
+        } else {
+          console.warn('❌ SDK card.list não está disponível');
+        }
+      }
+      
     } catch (error) {
       console.error('Erro ao inicializar SDK TCGdex:', error);
       this.tcgdex = null;
@@ -60,18 +92,22 @@ class TCGdexService {
 
   // Método para alterar idioma dinamicamente
   async setLanguage(language) {
+    const previousLanguage = this.language;
     this.language = language;
     this.baseUrl = `https://api.tcgdex.net/v2/${language}`;
-    try {
-      console.log('Tentando alterar idioma do SDK para:', language);
-      this.tcgdex = new TCGdex(language);
-      console.log(`Idioma alterado para: ${language}`);
-      console.log('SDK disponível após mudança:', !!this.tcgdex);
-      console.log('SDK series após mudança:', !!this.tcgdex?.series);
-    } catch (error) {
-      console.error('Erro ao alterar idioma:', error);
-      this.tcgdex = null;
+    
+    console.log('Tentando alterar idioma do SDK para:', language);
+    
+    // Se mudou de idioma, limpar cache do idioma anterior
+    if (previousLanguage && previousLanguage !== language) {
+      console.log('Limpando cache do idioma anterior:', previousLanguage);
+      await CacheService.clearLanguageCache(previousLanguage);
     }
+    
+    await this.initializeSDK(language);
+    console.log(`Idioma alterado para: ${language}`);
+    console.log('SDK disponível após mudança:', !!this.tcgdex);
+    console.log('SDK serie após mudança:', !!this.tcgdex?.serie);
   }
 
   // Usar a propriedade image da carta ou construir URL manualmente
@@ -155,39 +191,42 @@ class TCGdexService {
     try {
       console.log('Buscando séries...');
       
-      // Tentar buscar do cache primeiro
-      let allSeries = await CacheService.getCachedSeries();
+      // Tentar buscar do cache primeiro (com idioma)
+      let allSeries = await CacheService.getCachedSeries(this.language);
       
       if (!allSeries) {
         console.log('Buscando séries via SDK...');
         
-        if (this.tcgdex) {
+        // Verificar se o SDK está disponível e tem a propriedade serie
+        if (this.tcgdex && this.tcgdex.serie && typeof this.tcgdex.serie.list === 'function') {
           try {
             // Usar SDK para buscar séries
-            allSeries = await this.tcgdex.series.list();
+            allSeries = await this.tcgdex.serie.list();
             console.log('Séries encontradas via SDK:', allSeries.length);
           } catch (sdkError) {
-            console.log('SDK falhou, usando HTTP direto...');
+            console.log('SDK falhou, usando HTTP direto...', sdkError.message);
             // Fallback para HTTP direto
             const response = await fetch(`${this.baseUrl}/series`);
             allSeries = await response.json();
           }
         } else {
+          console.log('SDK não disponível ou serie.list não encontrado, usando HTTP direto...');
           // Fallback para HTTP direto
           const response = await fetch(`${this.baseUrl}/series`);
           allSeries = await response.json();
         }
         
-        // Salvar no cache
-        await CacheService.setCachedSeries(allSeries);
+        // Salvar no cache (com idioma)
+        await CacheService.setCachedSeries(allSeries, this.language);
         console.log('Séries salvas no cache');
       } else {
         console.log('Séries carregadas do cache');
       }
       
-      // Buscar configurações salvas
+      // Buscar configurações salvas específicas do idioma atual
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const savedSettings = await AsyncStorage.getItem('selectedSeries');
+      const languageKey = `selectedSeries_${this.language}`;
+      const savedSettings = await AsyncStorage.getItem(languageKey);
       
       let selectedSeriesIds = ['sv']; // Padrão: apenas SV
       if (savedSettings) {
@@ -210,31 +249,33 @@ class TCGdexService {
     try {
       console.log('Buscando expansões...');
       
-      // Tentar buscar do cache primeiro
-      let sets = await CacheService.getCachedSets();
+      // Tentar buscar do cache primeiro (com idioma)
+      let sets = await CacheService.getCachedSets(this.language);
       
       if (!sets) {
         console.log('Buscando expansões via SDK...');
         
-        if (this.tcgdex) {
+        // Verificar se o SDK está disponível e tem a propriedade set
+        if (this.tcgdex && this.tcgdex.set && typeof this.tcgdex.set.list === 'function') {
           try {
             // Usar SDK para buscar sets
             sets = await this.tcgdex.set.list();
             console.log('Sets encontrados via SDK:', sets.length);
           } catch (sdkError) {
-            console.log('SDK falhou, usando HTTP direto...');
+            console.log('SDK falhou, usando HTTP direto...', sdkError.message);
             // Fallback para HTTP direto
             const response = await fetch(`${this.baseUrl}/sets`);
             sets = await response.json();
           }
         } else {
+          console.log('SDK não disponível ou set.list não encontrado, usando HTTP direto...');
           // Fallback para HTTP direto
           const response = await fetch(`${this.baseUrl}/sets`);
           sets = await response.json();
         }
         
-        // Salvar no cache
-        await CacheService.setCachedSets(sets);
+        // Salvar no cache (com idioma)
+        await CacheService.setCachedSets(sets, this.language);
         console.log('Expansões salvas no cache');
       } else {
         console.log('Expansões carregadas do cache');
@@ -281,8 +322,8 @@ class TCGdexService {
     try {
       console.log('Buscando cartas da coleção:', setId);
       
-      // Tentar buscar do cache primeiro
-      let cardsWithDetails = await CacheService.getCachedCards(setId);
+      // Tentar buscar do cache primeiro (com idioma)
+      let cardsWithDetails = await CacheService.getCachedCards(setId, this.language);
       
       if (!cardsWithDetails) {
         console.log('Buscando cartas via SDK...');
@@ -353,8 +394,8 @@ class TCGdexService {
           );
         }
         
-        // Salvar no cache
-        await CacheService.setCachedCards(setId, cardsWithDetails);
+        // Salvar no cache (com idioma)
+        await CacheService.setCachedCards(setId, cardsWithDetails, this.language);
         console.log('Cartas salvas no cache');
       } else {
         console.log('Cartas carregadas do cache');
@@ -390,13 +431,28 @@ class TCGdexService {
     try {
       console.log('Buscando todas as séries...');
       
-      if (!this.tcgdex) {
-        throw new Error('SDK tcgdex não inicializado');
+      // Verificar se o SDK está disponível e tem a propriedade serie
+      if (this.tcgdex && this.tcgdex.serie && typeof this.tcgdex.serie.list === 'function') {
+        try {
+          const allSeries = await this.tcgdex.serie.list();
+          console.log('Todas as séries encontradas via SDK:', allSeries.length);
+          return allSeries;
+        } catch (sdkError) {
+          console.log('SDK falhou, usando HTTP direto...', sdkError.message);
+          // Fallback para HTTP direto
+          const response = await fetch(`${this.baseUrl}/series`);
+          const allSeries = await response.json();
+          console.log('Todas as séries encontradas via HTTP:', allSeries.length);
+          return allSeries;
+        }
+      } else {
+        console.log('SDK não disponível ou serie.list não encontrado, usando HTTP direto...');
+        // Fallback para HTTP direto
+        const response = await fetch(`${this.baseUrl}/series`);
+        const allSeries = await response.json();
+        console.log('Todas as séries encontradas via HTTP:', allSeries.length);
+        return allSeries;
       }
-      
-      const allSeries = await this.tcgdex.series.list();
-      console.log('Todas as séries encontradas:', allSeries.length);
-      return allSeries;
     } catch (error) {
       console.error('Erro ao buscar todas as séries:', error);
       throw error;
@@ -408,13 +464,28 @@ class TCGdexService {
     try {
       console.log('Buscando todas as expansões...');
       
-      if (!this.tcgdex) {
-        throw new Error('SDK tcgdex não inicializado');
+      // Verificar se o SDK está disponível e tem a propriedade set
+      if (this.tcgdex && this.tcgdex.set && typeof this.tcgdex.set.list === 'function') {
+        try {
+          const allSets = await this.tcgdex.set.list();
+          console.log('Todas as expansões encontradas via SDK:', allSets.length);
+          return allSets;
+        } catch (sdkError) {
+          console.log('SDK falhou, usando HTTP direto...', sdkError.message);
+          // Fallback para HTTP direto
+          const response = await fetch(`${this.baseUrl}/sets`);
+          const allSets = await response.json();
+          console.log('Todas as expansões encontradas via HTTP:', allSets.length);
+          return allSets;
+        }
+      } else {
+        console.log('SDK não disponível ou set.list não encontrado, usando HTTP direto...');
+        // Fallback para HTTP direto
+        const response = await fetch(`${this.baseUrl}/sets`);
+        const allSets = await response.json();
+        console.log('Todas as expansões encontradas via HTTP:', allSets.length);
+        return allSets;
       }
-      
-      const allSets = await this.tcgdex.set.list();
-      console.log('Todas as expansões encontradas:', allSets.length);
-      return allSets;
     } catch (error) {
       console.error('Erro ao buscar todas as expansões:', error);
       throw error;
@@ -426,9 +497,10 @@ class TCGdexService {
     try {
       console.log('Buscando expansões filtradas...');
       
-      // Buscar configurações salvas
+      // Buscar configurações salvas específicas do idioma atual
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const savedExpansions = await AsyncStorage.getItem('selectedExpansions');
+      const expansionsKey = `selectedExpansions_${this.language}`;
+      const savedExpansions = await AsyncStorage.getItem(expansionsKey);
       
       if (!savedExpansions) {
         console.log('Nenhuma expansão selecionada, retornando todas');
@@ -456,9 +528,10 @@ class TCGdexService {
     try {
       console.log('Buscando cartas filtradas...');
       
-      // Buscar configurações salvas
+      // Buscar configurações salvas específicas do idioma atual
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const savedExpansions = await AsyncStorage.getItem('selectedExpansions');
+      const expansionsKey = `selectedExpansions_${this.language}`;
+      const savedExpansions = await AsyncStorage.getItem(expansionsKey);
       
       if (!savedExpansions) {
         console.log('Nenhuma expansão selecionada, retornando todas as cartas');
@@ -497,6 +570,34 @@ class TCGdexService {
     } catch (error) {
       console.error('Erro ao buscar todas as cartas:', error);
       throw error;
+    }
+  }
+
+  // Método de teste para verificar SDK
+  async testSDK() {
+    try {
+      console.log('🧪 Testando SDK TCGdex...');
+      
+      if (!this.tcgdex) {
+        console.log('❌ SDK não inicializado');
+        return false;
+      }
+      
+      console.log('✅ SDK inicializado');
+      
+      // Teste rápido de funcionalidade
+      try {
+        const testSeries = await this.tcgdex.serie.list();
+        console.log('✅ SDK funcionando! Séries encontradas:', testSeries.length);
+        return true;
+      } catch (e) {
+        console.log('❌ SDK não está funcionando:', e.message);
+        return false;
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro no teste do SDK:', error);
+      return false;
     }
   }
 }

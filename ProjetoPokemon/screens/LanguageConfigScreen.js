@@ -8,9 +8,14 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  FlatList,
+  Dimensions,
+  StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import tcgdexService from '../services/TCGdexService';
+
+const { width } = Dimensions.get('window');
 
 const LanguageConfigScreen = ({ navigation, route }) => {
   const { language } = route.params || { language: 'pt' };
@@ -41,17 +46,23 @@ const LanguageConfigScreen = ({ navigation, route }) => {
   const loadSavedSettings = async () => {
     try {
       const savedLanguage = await AsyncStorage.getItem('selectedLanguage');
-      const savedSeries = await AsyncStorage.getItem('selectedSeries');
-      const savedExpansions = await AsyncStorage.getItem('selectedExpansions');
-
+      
       if (savedLanguage) {
         setSelectedLanguage(savedLanguage);
-      }
-      if (savedSeries) {
-        setSelectedSeries(JSON.parse(savedSeries));
-      }
-      if (savedExpansions) {
-        setSelectedExpansions(JSON.parse(savedExpansions));
+        
+        // Carregar configurações específicas do idioma atual
+        const languageKey = `selectedSeries_${savedLanguage}`;
+        const expansionsKey = `selectedExpansions_${savedLanguage}`;
+        
+        const savedSeries = await AsyncStorage.getItem(languageKey);
+        const savedExpansions = await AsyncStorage.getItem(expansionsKey);
+
+        if (savedSeries) {
+          setSelectedSeries(JSON.parse(savedSeries));
+        }
+        if (savedExpansions) {
+          setSelectedExpansions(JSON.parse(savedExpansions));
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar configurações salvas:', error);
@@ -134,8 +145,13 @@ const LanguageConfigScreen = ({ navigation, route }) => {
   const saveSettings = async () => {
     try {
       await AsyncStorage.setItem('selectedLanguage', selectedLanguage);
-      await AsyncStorage.setItem('selectedSeries', JSON.stringify(selectedSeries));
-      await AsyncStorage.setItem('selectedExpansions', JSON.stringify(selectedExpansions));
+      
+      // Salvar configurações específicas do idioma atual
+      const languageKey = `selectedSeries_${selectedLanguage}`;
+      const expansionsKey = `selectedExpansions_${selectedLanguage}`;
+      
+      await AsyncStorage.setItem(languageKey, JSON.stringify(selectedSeries));
+      await AsyncStorage.setItem(expansionsKey, JSON.stringify(selectedExpansions));
       
       Alert.alert(
         'Sucesso', 
@@ -158,56 +174,124 @@ const LanguageConfigScreen = ({ navigation, route }) => {
     return seriesData ? seriesData.name : seriesId;
   };
 
+  const selectAllSeries = () => {
+    const allSeriesIds = series.map(s => s.id);
+    setSelectedSeries(allSeriesIds);
+  };
+
+  const selectNoneSeries = () => {
+    setSelectedSeries([]);
+    setExpansions({});
+    setSelectedExpansions([]);
+  };
+
+  const selectAllExpansions = () => {
+    const allExpansionIds = [];
+    Object.values(expansions).forEach(seriesExpansions => {
+      seriesExpansions.forEach(expansion => {
+        allExpansionIds.push(expansion.id);
+      });
+    });
+    setSelectedExpansions(allExpansionIds);
+  };
+
+  const selectNoneExpansions = () => {
+    setSelectedExpansions([]);
+  };
+
+  const renderSeriesItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.gridItem,
+        selectedSeries.includes(item.id) && styles.selectedGridItem
+      ]}
+      onPress={() => toggleSeries(item.id)}
+    >
+      <Text style={[
+        styles.gridItemText,
+        selectedSeries.includes(item.id) && styles.selectedGridItemText
+      ]}>
+        {item.name}
+      </Text>
+      {selectedSeries.includes(item.id) && (
+        <Text style={styles.checkmark}>✓</Text>
+      )}
+    </TouchableOpacity>
+  );
+
+  const renderExpansionItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.gridItem,
+        selectedExpansions.includes(item.id) && styles.selectedGridItem
+      ]}
+      onPress={() => toggleExpansion(item.id)}
+    >
+      <Text style={[
+        styles.gridItemText,
+        selectedExpansions.includes(item.id) && styles.selectedGridItemText
+      ]}>
+        {item.name}
+      </Text>
+      {selectedExpansions.includes(item.id) && (
+        <Text style={styles.checkmark}>✓</Text>
+      )}
+    </TouchableOpacity>
+  );
+
+  // Preparar dados das expansões para o FlatList
+  const allExpansions = [];
+  selectedSeries.forEach(seriesId => {
+    if (expansions[seriesId]) {
+      expansions[seriesId].forEach(expansion => {
+        allExpansions.push({ ...expansion, seriesId });
+      });
+    }
+  });
+
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>← Voltar</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Configurações</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header Fixo */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>← Voltar</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Configurações</Text>
+          <TouchableOpacity onPress={saveSettings} style={styles.saveButtonHeader}>
+            <Text style={styles.saveButtonTextHeader}>Salvar</Text>
+          </TouchableOpacity>
+        </View>
 
       <ScrollView style={styles.content}>
         {/* Seleção de Idioma */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Idioma</Text>
-          <View style={styles.languageButtons}>
-            <TouchableOpacity
-              style={[
-                styles.languageButton,
-                selectedLanguage === 'pt' && styles.activeLanguageButton
-              ]}
-              onPress={() => setSelectedLanguage('pt')}
-            >
-              <Text style={[
-                styles.languageButtonText,
-                selectedLanguage === 'pt' && styles.activeLanguageButtonText
-              ]}>
-                Português (BR)
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.languageButton,
-                selectedLanguage === 'en' && styles.activeLanguageButton
-              ]}
-              onPress={() => setSelectedLanguage('en')}
-            >
-              <Text style={[
-                styles.languageButtonText,
-                selectedLanguage === 'en' && styles.activeLanguageButtonText
-              ]}>
-                English (EN)
-              </Text>
-            </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Idioma Selecionado</Text>
+          <View style={styles.languageDisplay}>
+            <Text style={styles.currentLanguageText}>
+              {selectedLanguage === 'pt' ? 'Português (BR)' : 'English (EN)'}
+            </Text>
+            <Text style={styles.languageNote}>
+              Para alterar o idioma, use os botões TCG BR / EN TCG na tela principal
+            </Text>
           </View>
         </View>
 
         {/* Seleção de Séries */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Coleções</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Coleções</Text>
+            <View style={styles.selectButtons}>
+              <TouchableOpacity style={styles.selectButton} onPress={selectAllSeries}>
+                <Text style={styles.selectButtonText}>Todos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.selectButton} onPress={selectNoneSeries}>
+                <Text style={styles.selectButtonText}>Nenhum</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
           <Text style={styles.sectionSubtitle}>
             Escolha as coleções que deseja visualizar
           </Text>
@@ -218,35 +302,31 @@ const LanguageConfigScreen = ({ navigation, route }) => {
               <Text style={styles.loadingText}>Carregando coleções...</Text>
             </View>
           ) : (
-            <View style={styles.seriesContainer}>
-              {series.map((seriesItem) => (
-                <TouchableOpacity
-                  key={seriesItem.id}
-                  style={[
-                    styles.seriesItem,
-                    selectedSeries.includes(seriesItem.id) && styles.selectedSeriesItem
-                  ]}
-                  onPress={() => toggleSeries(seriesItem.id)}
-                >
-                  <Text style={[
-                    styles.seriesText,
-                    selectedSeries.includes(seriesItem.id) && styles.selectedSeriesText
-                  ]}>
-                    {seriesItem.name}
-                  </Text>
-                  {selectedSeries.includes(seriesItem.id) && (
-                    <Text style={styles.checkmark}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+            <FlatList
+              data={series}
+              renderItem={renderSeriesItem}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              scrollEnabled={false}
+              contentContainerStyle={styles.gridContainer}
+            />
           )}
         </View>
 
         {/* Seleção de Expansões */}
         {selectedSeries.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Expansões</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Expansões</Text>
+              <View style={styles.selectButtons}>
+                <TouchableOpacity style={styles.selectButton} onPress={selectAllExpansions}>
+                  <Text style={styles.selectButtonText}>Todos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.selectButton} onPress={selectNoneExpansions}>
+                  <Text style={styles.selectButtonText}>Nenhum</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
             <Text style={styles.sectionSubtitle}>
               Escolha as expansões específicas de cada coleção
             </Text>
@@ -257,52 +337,29 @@ const LanguageConfigScreen = ({ navigation, route }) => {
                 <Text style={styles.loadingText}>Carregando expansões...</Text>
               </View>
             ) : (
-              <View style={styles.expansionsContainer}>
-                {selectedSeries.map((seriesId) => (
-                  <View key={seriesId} style={styles.seriesExpansionsContainer}>
-                    <Text style={styles.seriesExpansionsTitle}>
-                      {getSeriesName(seriesId)}
-                    </Text>
-                    <View style={styles.expansionsList}>
-                      {expansions[seriesId]?.map((expansion) => (
-                        <TouchableOpacity
-                          key={expansion.id}
-                          style={[
-                            styles.expansionItem,
-                            selectedExpansions.includes(expansion.id) && styles.selectedExpansionItem
-                          ]}
-                          onPress={() => toggleExpansion(expansion.id)}
-                        >
-                          <Text style={[
-                            styles.expansionText,
-                            selectedExpansions.includes(expansion.id) && styles.selectedExpansionText
-                          ]}>
-                            {expansion.name}
-                          </Text>
-                          {selectedExpansions.includes(expansion.id) && (
-                            <Text style={styles.checkmark}>✓</Text>
-                          )}
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                ))}
-              </View>
+              <FlatList
+                data={allExpansions}
+                renderItem={renderExpansionItem}
+                keyExtractor={(item) => item.id}
+                numColumns={2}
+                scrollEnabled={false}
+                contentContainerStyle={styles.gridContainer}
+              />
             )}
           </View>
         )}
-
-        {/* Botão Salvar */}
-        <TouchableOpacity style={styles.saveButton} onPress={saveSettings}>
-          <Text style={styles.saveButtonText}>Salvar Configurações</Text>
-        </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  safeArea: {
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
@@ -311,10 +368,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 12,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   backButton: {
     fontSize: 16,
@@ -326,8 +388,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  placeholder: {
-    width: 60,
+  saveButtonHeader: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  saveButtonTextHeader: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   content: {
     flex: 1,
@@ -336,39 +406,54 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 30,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
   },
   sectionSubtitle: {
     fontSize: 14,
     color: '#666',
     marginBottom: 15,
   },
-  languageButtons: {
+  selectButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    gap: 8,
   },
-  languageButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 25,
+  selectButton: {
     backgroundColor: '#f0f0f0',
-    flex: 0.45,
-    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
   },
-  activeLanguageButton: {
-    backgroundColor: '#007AFF',
-  },
-  languageButtonText: {
-    fontSize: 14,
+  selectButtonText: {
+    fontSize: 12,
     fontWeight: '600',
     color: '#666',
   },
-  activeLanguageButtonText: {
-    color: '#fff',
+  languageDisplay: {
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  currentLanguageText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#007AFF',
+    marginBottom: 8,
+  },
+  languageNote: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   loadingContainer: {
     alignItems: 'center',
@@ -379,87 +464,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  seriesContainer: {
+  gridContainer: {
     gap: 10,
   },
-  seriesItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
+  gridItem: {
+    flex: 1,
     backgroundColor: '#fff',
     borderRadius: 10,
     borderWidth: 2,
     borderColor: '#e0e0e0',
+    padding: 12,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    minHeight: 60,
+    justifyContent: 'center',
   },
-  selectedSeriesItem: {
+  selectedGridItem: {
     borderColor: '#007AFF',
     backgroundColor: '#f0f8ff',
   },
-  seriesText: {
-    fontSize: 16,
+  gridItemText: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#333',
+    textAlign: 'center',
+    flex: 1,
   },
-  selectedSeriesText: {
+  selectedGridItemText: {
     color: '#007AFF',
   },
   checkmark: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#007AFF',
     fontWeight: 'bold',
-  },
-  expansionsContainer: {
-    gap: 20,
-  },
-  seriesExpansionsContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 15,
-  },
-  seriesExpansionsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-  },
-  expansionsList: {
-    gap: 8,
-  },
-  expansionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  selectedExpansionItem: {
-    borderColor: '#007AFF',
-    backgroundColor: '#f0f8ff',
-  },
-  expansionText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  selectedExpansionText: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 30,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
+    marginTop: 4,
   },
 });
 

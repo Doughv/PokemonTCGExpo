@@ -29,9 +29,12 @@ const SeriesScreen = ({ navigation }) => {
       setLoading(true);
       console.log('Carregando séries...');
       
-      // Buscar configurações salvas
+      // Buscar configurações salvas específicas do idioma atual
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const savedSeries = await AsyncStorage.getItem('selectedSeries');
+      const savedLanguage = await AsyncStorage.getItem('selectedLanguage');
+      const languageKey = savedLanguage || 'pt';
+      const seriesKey = `selectedSeries_${languageKey}`;
+      const savedSeries = await AsyncStorage.getItem(seriesKey);
       
       let seriesData;
       if (savedSeries) {

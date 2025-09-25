@@ -7,6 +7,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import TCGdexService from '../services/TCGdexService';
 
 const MainScreen = ({ navigation }) => {
   const [currentLanguage, setCurrentLanguage] = useState('pt');
@@ -26,8 +27,24 @@ const MainScreen = ({ navigation }) => {
     }
   };
 
-  const handleLanguageConfigPress = (language) => {
-    navigation.navigate('LanguageConfig', { language });
+  const handleLanguageConfigPress = async (language) => {
+    try {
+      // Atualizar idioma no serviço
+      await TCGdexService.setLanguage(language);
+      
+      // Salvar idioma selecionado
+      await AsyncStorage.setItem('selectedLanguage', language);
+      
+      // Atualizar estado local
+      setCurrentLanguage(language);
+      
+      console.log('✅ Idioma alterado para:', language);
+      
+      // Navegar para configurações
+      navigation.navigate('LanguageConfig', { language });
+    } catch (error) {
+      console.error('❌ Erro ao alterar idioma:', error);
+    }
   };
 
   const handleCollectionsPress = () => {

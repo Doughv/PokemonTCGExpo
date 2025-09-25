@@ -3,6 +3,7 @@ import '../polyfills';
 import TCGdex from '@tcgdex/sdk';
 import CacheService from './CacheService';
 import OfflineService from './OfflineService';
+import OptimizedStorageService from './OptimizedStorageService';
 
 // Polyfill robusto para APIs do navegador no React Native
 if (typeof global !== 'undefined') {
@@ -678,7 +679,7 @@ class TCGdexService {
     }
   }
 
-  // Atualizar dados offline
+  // Atualizar dados offline usando armazenamento otimizado
   async updateOfflineData() {
     try {
       console.log('Atualizando dados offline...');
@@ -690,27 +691,25 @@ class TCGdexService {
         cards: await this.tcgdex.card.list()
       };
 
-      // Atualizar dados offline
-      const result = await OfflineService.updateOfflineData(apiData);
+      // Atualizar dados usando serviço otimizado
+      const result = await OptimizedStorageService.updateData(apiData, this.language);
       
       if (result.success) {
-        console.log('✅ Dados offline atualizados com sucesso');
+        const stats = await OptimizedStorageService.getStats(this.language);
         return {
           success: true,
           newCounts: result.newCounts,
-          message: 'Dados atualizados com sucesso!'
+          totalCounts: stats,
+          message: result.message
         };
       } else {
-        console.log('❌ Erro ao atualizar dados offline:', result.error);
         return {
           success: false,
-          error: result.error,
-          message: 'Erro ao atualizar dados'
+          message: result.message
         };
       }
-
     } catch (error) {
-      console.error('❌ Erro ao atualizar dados offline:', error);
+      console.error('Erro ao atualizar dados offline:', error);
       return {
         success: false,
         error: error.message,
@@ -722,10 +721,50 @@ class TCGdexService {
   // Obter resumo dos dados offline
   async getOfflineSummary() {
     try {
-      return await OfflineService.getOfflineSummary();
+      const stats = await OptimizedStorageService.getStats(this.language);
+      return {
+        hasData: stats.series > 0 || stats.sets > 0 || stats.cards > 0,
+        counts: stats,
+        lastUpdate: new Date().toISOString()
+      };
     } catch (error) {
-      console.error('❌ Erro ao obter resumo offline:', error);
-      return { hasData: false };
+      console.error('Erro ao obter resumo offline:', error);
+      return { hasData: false, error: error.message };
+    }
+  }
+
+  // Buscar séries do armazenamento otimizado
+  async getSeriesFromStorage() {
+    try {
+      return await OptimizedStorageService.loadData('series', this.language);
+    } catch (error) {
+      console.error('Erro ao buscar séries:', error);
+      return [];
+    }
+  }
+
+  // Buscar sets do armazenamento otimizado
+  async getSetsFromStorage(seriesId = null) {
+    try {
+      const allSets = await OptimizedStorageService.loadData('sets', this.language);
+      if (seriesId) {
+        return allSets.filter(set => set.serie?.id === seriesId);
+      }
+      return allSets;
+    } catch (error) {
+      console.error('Erro ao buscar sets:', error);
+      return [];
+    }
+  }
+
+  // Buscar cartas do armazenamento otimizado
+  async getCardsFromStorage(setId) {
+    try {
+      const allCards = await OptimizedStorageService.loadData('cards', this.language);
+      return allCards.filter(card => card.set?.id === setId);
+    } catch (error) {
+      console.error('Erro ao buscar cartas:', error);
+      return [];
     }
   }
 }

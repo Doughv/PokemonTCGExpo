@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TCGdexService from './services/TCGdexService';
+import OptimizedStorageService from './services/OptimizedStorageService';
 
 // Importar as telas
 import MainScreen from './screens/MainScreen';
@@ -23,18 +24,33 @@ export default function App() {
     const loadLanguage = async () => {
       try {
         const savedLanguage = await AsyncStorage.getItem('selectedLanguage');
-        if (savedLanguage) {
-          await TCGdexService.setLanguage(savedLanguage);
-          console.log('✅ Idioma carregado:', savedLanguage);
-        }
+        const language = savedLanguage || 'pt';
         
-        // Testar SDK após carregar idioma
+        await TCGdexService.setLanguage(language);
+        console.log('Idioma carregado:', language);
+        
+        // Migração automática se necessário
         setTimeout(async () => {
-          await TCGdexService.testSDK();
-        }, 2000);
+          try {
+            const stats = await OptimizedStorageService.getStats(language);
+            if (stats.series === 0 && stats.sets === 0) {
+              console.log('Migrando dados do JSON...');
+              const migrationResult = await OptimizedStorageService.migrateFromJSON(language);
+              if (migrationResult.success) {
+                console.log('Migração:', migrationResult.message);
+              } else {
+                console.error('Erro na migração:', migrationResult.message);
+              }
+            } else {
+              console.log('Dados já migrados:', stats);
+            }
+          } catch (error) {
+            console.error('Erro na migração automática:', error);
+          }
+        }, 3000);
         
       } catch (error) {
-        console.error('❌ Erro ao carregar idioma:', error);
+        console.error('Erro ao carregar idioma:', error);
       }
     };
 

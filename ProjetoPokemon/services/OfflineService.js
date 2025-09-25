@@ -29,7 +29,7 @@ class OfflineService {
       const cardsData = require('../assets/data/pokemon_cards_detailed.json');
       console.log('✅ Cards carregados:', cardsData.length);
       
-      // Criar resumo para comparação
+      // Criar resumo para comparação (sem salvar cards no cache)
       const summary = {
         series: seriesData.map(s => s.id),
         sets: setsData.map(s => s.id),
@@ -42,10 +42,10 @@ class OfflineService {
         }
       };
       
-      // Salvar no cache
+      // Salvar no cache (apenas séries e sets - cards ficam no JSON)
       await this.saveToCache('series', seriesData);
       await this.saveToCache('sets', setsData);
-      await this.saveToCache('cards', cardsData);
+      // NÃO salvar cards no cache - muito grande (26MB)
       await this.saveToCache('summary', summary);
       
       console.log('✅ Dados offline carregados e salvos no cache');
@@ -175,28 +175,29 @@ class OfflineService {
       // Carregar dados atuais
       const currentSeries = await this.loadFromCache('series') || [];
       const currentSets = await this.loadFromCache('sets') || [];
-      const currentCards = await this.loadFromCache('cards') || [];
+      // Cards não são salvos no cache - ficam no JSON
 
       // Mesclar novos dados
       const updatedSeries = [...currentSeries, ...(newData.series || [])];
       const updatedSets = [...currentSets, ...(newData.sets || [])];
-      const updatedCards = [...currentCards, ...(newData.cards || [])];
+      // Cards ficam no JSON original - não atualizamos via cache
 
-      // Salvar dados atualizados
+      // Salvar dados atualizados (apenas séries e sets)
       await this.saveToCache('series', updatedSeries);
       await this.saveToCache('sets', updatedSets);
-      await this.saveToCache('cards', updatedCards);
+      // NÃO salvar cards no cache - muito grande
 
-      // Atualizar resumo
+      // Atualizar resumo (cards vêm do JSON original)
+      const cardsData = require('../assets/data/pokemon_cards_detailed.json');
       const newSummary = {
         series: updatedSeries.map(s => s.id),
         sets: updatedSets.map(s => s.id),
-        cards: updatedCards.map(c => c.id),
+        cards: cardsData.map(c => c.id), // Sempre do JSON original
         lastUpdate: new Date().toISOString(),
         counts: {
           series: updatedSeries.length,
           sets: updatedSets.length,
-          cards: updatedCards.length
+          cards: cardsData.length // Sempre do JSON original
         }
       };
 
@@ -211,6 +212,19 @@ class OfflineService {
     } catch (error) {
       console.error('❌ Erro ao atualizar dados offline:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  // Carregar cards do JSON (quando necessário)
+  async loadCardsFromJSON() {
+    try {
+      console.log('📁 Carregando cards do JSON...');
+      const cardsData = require('../assets/data/pokemon_cards_detailed.json');
+      console.log('✅ Cards carregados do JSON:', cardsData.length);
+      return cardsData;
+    } catch (error) {
+      console.error('❌ Erro ao carregar cards do JSON:', error);
+      return [];
     }
   }
 

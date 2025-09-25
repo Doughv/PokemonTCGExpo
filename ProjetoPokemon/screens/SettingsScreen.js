@@ -44,7 +44,6 @@ const SettingsScreen = ({ navigation }) => {
               await CacheService.forceRefreshCache();
               await loadCacheInfo();
               setLoading(false);
-              Alert.alert('Sucesso', 'Cache atualizado com sucesso!');
             }
           }
         ]
@@ -68,7 +67,6 @@ const SettingsScreen = ({ navigation }) => {
             onPress: async () => {
               await CacheService.clearAllCache();
               await loadCacheInfo();
-              Alert.alert('Sucesso', 'Cache limpo com sucesso!');
             }
           }
         ]

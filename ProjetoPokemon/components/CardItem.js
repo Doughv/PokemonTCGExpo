@@ -17,20 +17,103 @@ const CardItem = ({ card, onPress, itemWidth, setCardCount }) => {
   const [localImagePath, setLocalImagePath] = useState(null);
   const [imageLoading, setImageLoading] = useState(true);
   
-  // Debug: mostrar informações da carta
-  console.log('Carta recebida:', {
-    name: card.name,
-    rarity: card.rarity,
-    category: card.category,
-    hp: card.hp,
-    types: card.types,
-    stage: card.stage,
-    suffix: card.suffix,
-    dexId: card.dexId,
-    illustrator: card.illustrator
-  });
-  
   const remoteImageUrl = TCGdexService.getImageURL(card, 'high', 'png');
+
+  const getRarityColor = (rarity) => {
+    switch (rarity?.toLowerCase()) {
+      case 'raro':
+        return '#FFD700'; // Dourado vibrante
+      case 'incomum':
+        return '#C0C0C0'; // Prata
+      case 'comum':
+        return '#CD7F32'; // Bronze
+      case 'raro holo':
+        return '#FF4444'; // Vermelho vibrante
+      case 'raro ultra':
+        return '#9C27B0'; // Roxo vibrante
+      case 'raro secreto':
+        return '#E91E63'; // Rosa vibrante
+      case 'rare':
+        return '#FFD700'; // Dourado
+      case 'uncommon':
+        return '#C0C0C0'; // Prata
+      case 'common':
+        return '#CD7F32'; // Bronze
+      case 'rare holo':
+        return '#FF4444'; // Vermelho
+      case 'rare ultra':
+        return '#9C27B0'; // Roxo
+      case 'rare secret':
+        return '#E91E63'; // Rosa
+      default:
+        return '#90A4AE'; // Cinza
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'fire':
+      case 'fogo':
+        return '#FF4444'; // Vermelho vibrante
+      case 'grass':
+      case 'planta':
+        return '#4CAF50'; // Verde vibrante
+      case 'water':
+      case 'água':
+      case 'agua':
+        return '#2196F3'; // Azul vibrante
+      case 'electric':
+      case 'elétrico':
+      case 'eletrico':
+        return '#FFD700'; // Amarelo dourado
+      case 'fighting':
+      case 'lutador':
+        return '#8D6E63'; // Marrom
+      case 'psychic':
+      case 'psíquico':
+      case 'psiquico':
+        return '#9C27B0'; // Roxo vibrante
+      case 'dark':
+      case 'sombrio':
+        return '#424242'; // Cinza escuro
+      case 'metal':
+      case 'steel':
+        return '#607D8B'; // Azul acinzentado
+      case 'normal':
+      case 'incolor':
+        return '#E0E0E0'; // Cinza claro
+      case 'fairy':
+      case 'fada':
+        return '#E91E63'; // Rosa vibrante
+      case 'dragon':
+      case 'dragão':
+      case 'dragao':
+        return '#673AB7'; // Roxo escuro
+      case 'ground':
+      case 'terra':
+        return '#8D6E63'; // Marrom claro
+      case 'rock':
+      case 'pedra':
+        return '#795548'; // Marrom
+      case 'ice':
+      case 'gelo':
+        return '#00BCD4'; // Ciano vibrante
+      case 'flying':
+      case 'voador':
+        return '#81C784'; // Verde claro
+      case 'poison':
+      case 'veneno':
+        return '#7B1FA2'; // Roxo escuro
+      case 'bug':
+      case 'inseto':
+        return '#689F38'; // Verde escuro
+      case 'ghost':
+      case 'fantasma':
+        return '#512DA8'; // Roxo muito escuro
+      default:
+        return '#90A4AE'; // Cinza padrão
+    }
+  };
 
   useEffect(() => {
     loadLocalImage();
@@ -65,89 +148,28 @@ const CardItem = ({ card, onPress, itemWidth, setCardCount }) => {
     onPress(card);
   };
 
-  const getRarityColor = (rarity) => {
-    switch (rarity) {
-      case 'Raro':
-        return '#FFD700'; // Dourado
-      case 'Incomum':
-        return '#C0C0C0'; // Prata
-      case 'Comum':
-        return '#CD7F32'; // Bronze
-      case 'Raro Holo':
-        return '#FF6B6B'; // Vermelho
-      case 'Raro Ultra':
-        return '#9C27B0'; // Roxo
-      case 'Raro Secreto':
-        return '#E91E63'; // Rosa
-      default:
-        return '#90A4AE'; // Cinza
-    }
-  };
-
-  const getTypeColor = (type) => {
-    switch (type?.toLowerCase()) {
-      case 'fire':
-      case 'fogo':
-        return '#FF5722'; // Vermelho
-      case 'grass':
-      case 'planta':
-        return '#4CAF50'; // Verde
-      case 'water':
-      case 'água':
-      case 'agua':
-        return '#2196F3'; // Azul
-      case 'electric':
-      case 'elétrico':
-      case 'eletrico':
-        return '#FFC107'; // Amarelo
-      case 'fighting':
-      case 'lutador':
-        return '#795548'; // Marrom
-      case 'psychic':
-      case 'psíquico':
-      case 'psiquico':
-        return '#9C27B0'; // Roxo
-      case 'dark':
-      case 'sombrio':
-        return '#424242'; // Cinza escuro
-      case 'metal':
-      case 'steel':
-        return '#607D8B'; // Azul acinzentado
-      case 'normal':
-      case 'incolor':
-        return '#E0E0E0'; // Cinza claro
-      case 'fairy':
-      case 'fada':
-        return '#E91E63'; // Rosa
-      case 'dragon':
-      case 'dragão':
-      case 'dragao':
-        return '#673AB7'; // Roxo escuro
-      case 'ground':
-      case 'terra':
-        return '#8D6E63'; // Marrom claro
-      case 'rock':
-      case 'pedra':
-        return '#795548'; // Marrom
-      case 'ice':
-      case 'gelo':
-        return '#B3E5FC'; // Azul claro
-      case 'flying':
-      case 'voador':
-        return '#81C784'; // Verde claro
-      case 'poison':
-      case 'veneno':
-        return '#7B1FA2'; // Roxo escuro
-      case 'bug':
-      case 'inseto':
-        return '#689F38'; // Verde escuro
-      case 'ghost':
-      case 'fantasma':
-        return '#512DA8'; // Roxo muito escuro
-      default:
-        return '#90A4AE'; // Cinza padrão
-    }
-  };
+  // Debug: mostrar informações da carta
+  console.log('Carta recebida:', {
+    name: card.name,
+    rarity: card.rarity,
+    category: card.category,
+    hp: card.hp,
+    types: card.types,
+    stage: card.stage,
+    suffix: card.suffix,
+    dexId: card.dexId,
+    illustrator: card.illustrator
+  });
+  
+  // Debug específico para badges
+  console.log('Badges debug:', {
+    hasRarity: !!card.rarity,
+    rarityValue: card.rarity,
+    rarityColor: card.rarity ? getRarityColor(card.rarity) : 'N/A',
+    hasTypes: !!(card.types && card.types.length > 0),
+    typesValue: card.types,
+    typesColors: card.types ? card.types.map(t => getTypeColor(t)) : []
+  });
 
 
   const renderImage = () => {
@@ -324,17 +346,19 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   rarityBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 3,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   rarityBadgeText: {
     fontSize: 10,
@@ -349,19 +373,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   typeBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
     marginLeft: 4,
     marginBottom: 2,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 3,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   typeBadgeText: {
     fontSize: 9,

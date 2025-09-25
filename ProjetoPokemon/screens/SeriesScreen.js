@@ -120,7 +120,6 @@ const SeriesScreen = ({ navigation }) => {
               onPress: async () => {
                 const result = await TCGdexService.updateOfflineData();
                 if (result.success) {
-                  Alert.alert('Sucesso', result.message);
                   await loadOfflineSummary();
                 } else {
                   Alert.alert('Erro', result.message);

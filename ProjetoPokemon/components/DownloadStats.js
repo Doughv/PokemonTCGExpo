@@ -39,7 +39,7 @@ const DownloadStats = ({ onStatsUpdate }) => {
             if (onStatsUpdate) {
               onStatsUpdate();
             }
-            Alert.alert('Sucesso', 'Imagens removidas com sucesso!');
+            // Imagens removidas silenciosamente
           }
         }
       ]

@@ -14,6 +14,7 @@ import {
 import CardItem from '../components/CardItem';
 import TCGdexService from '../services/TCGdexService';
 import ImageDownloadService from '../services/ImageDownloadService';
+import OfflineService from '../services/OfflineService';
 
 const { width } = Dimensions.get('window');
 const numColumns = 2;
@@ -56,7 +57,25 @@ const CardsScreen = ({ route, navigation }) => {
         // Verificar se esta expansão está nas configurações do usuário
         const selectedExpansionIds = JSON.parse(savedExpansions);
         if (selectedExpansionIds.includes(setId)) {
-          cardsData = await TCGdexService.getCardsBySet(setId);
+          // Tentar carregar dados offline primeiro
+          try {
+            console.log('📁 Tentando carregar dados offline...');
+            const offlineCards = await OfflineService.loadCardsFromJSON();
+            
+            // Filtrar cartas da expansão específica
+            const setCards = offlineCards.filter(card => card.set?.id === setId);
+            
+            if (setCards.length > 0) {
+              console.log(`✅ Encontradas ${setCards.length} cartas offline para ${setId}`);
+              cardsData = setCards;
+            } else {
+              console.log('⚠️ Nenhuma carta offline encontrada, usando SDK...');
+              cardsData = await TCGdexService.getCardsBySet(setId);
+            }
+          } catch (error) {
+            console.log('❌ Erro ao carregar dados offline, usando SDK:', error.message);
+            cardsData = await TCGdexService.getCardsBySet(setId);
+          }
           console.log('Cartas carregadas (expansão selecionada):', cardsData.length);
         } else {
           // Se a expansão não está selecionada, mostrar mensagem
@@ -64,8 +83,23 @@ const CardsScreen = ({ route, navigation }) => {
           console.log('Expansão não selecionada nas configurações');
         }
       } else {
-        // Usar método padrão se não há configurações
-        cardsData = await TCGdexService.getCardsBySet(setId);
+        // Usar dados offline se disponíveis
+        try {
+          console.log('📁 Tentando carregar dados offline...');
+          const offlineCards = await OfflineService.loadCardsFromJSON();
+          const setCards = offlineCards.filter(card => card.set?.id === setId);
+          
+          if (setCards.length > 0) {
+            console.log(`✅ Encontradas ${setCards.length} cartas offline para ${setId}`);
+            cardsData = setCards;
+          } else {
+            console.log('⚠️ Nenhuma carta offline encontrada, usando SDK...');
+            cardsData = await TCGdexService.getCardsBySet(setId);
+          }
+        } catch (error) {
+          console.log('❌ Erro ao carregar dados offline, usando SDK:', error.message);
+          cardsData = await TCGdexService.getCardsBySet(setId);
+        }
         console.log('Cartas padrão:', cardsData.length);
       }
       
@@ -109,8 +143,34 @@ const CardsScreen = ({ route, navigation }) => {
   };
 
   const handleCardPress = (card) => {
+    // Criar uma cópia limpa da carta sem funções do SDK
+    const cleanCard = {
+      id: card.id,
+      name: card.name,
+      image: card.image,
+      localId: card.localId,
+      rarity: card.rarity,
+      category: card.category,
+      hp: card.hp,
+      types: card.types,
+      stage: card.stage,
+      suffix: card.suffix,
+      dexId: card.dexId,
+      illustrator: card.illustrator,
+      set: card.set ? {
+        id: card.set.id,
+        name: card.set.name,
+        symbol: card.set.symbol,
+        cardCount: card.set.cardCount
+      } : null,
+      variants: card.variants,
+      attacks: card.attacks,
+      weaknesses: card.weaknesses,
+      resistances: card.resistances
+    };
+    
     navigation.navigate('CardDetail', { 
-      card,
+      card: cleanCard,
       setCardCount: setCardCount
     });
   };

@@ -153,16 +153,8 @@ const LanguageConfigScreen = ({ navigation, route }) => {
       await AsyncStorage.setItem(languageKey, JSON.stringify(selectedSeries));
       await AsyncStorage.setItem(expansionsKey, JSON.stringify(selectedExpansions));
       
-      Alert.alert(
-        'Sucesso', 
-        'Configurações salvas com sucesso!',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      // Salvar silenciosamente sem alerta
+      navigation.goBack();
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
       Alert.alert('Erro', 'Não foi possível salvar as configurações.');

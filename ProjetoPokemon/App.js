@@ -22,7 +22,7 @@ export default function App() {
     // Carregar idioma salvo na inicialização
     const loadLanguage = async () => {
       try {
-        const savedLanguage = await AsyncStorage.getItem('language');
+        const savedLanguage = await AsyncStorage.getItem('selectedLanguage');
         if (savedLanguage) {
           await TCGdexService.setLanguage(savedLanguage);
           console.log('✅ Idioma carregado:', savedLanguage);

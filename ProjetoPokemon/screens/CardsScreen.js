@@ -44,9 +44,12 @@ const CardsScreen = ({ route, navigation }) => {
       setLoading(true);
       console.log('🔍 Carregando cartas da expansão:', setName);
       
-      // Buscar configurações salvas
+      // Buscar configurações salvas específicas do idioma atual
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const savedExpansions = await AsyncStorage.getItem('selectedExpansions');
+      const savedLanguage = await AsyncStorage.getItem('selectedLanguage');
+      const languageKey = savedLanguage || 'pt';
+      const expansionsKey = `selectedExpansions_${languageKey}`;
+      const savedExpansions = await AsyncStorage.getItem(expansionsKey);
       
       let cardsData;
       if (savedExpansions) {
